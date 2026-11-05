@@ -1,1200 +1,930 @@
 
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#101827" />
-  <title>INRP Adapter V3</title>
-
-  <style>
-    :root {
-      --bg: #0b1220;
-      --panel: #111c2e;
-      --panel2: #17243a;
-      --border: #263750;
-      --text: #edf3fc;
-      --muted: #91a2bb;
-      --accent: #5ee0bd;
-      --accent2: #36b99a;
-      --danger: #ff7185;
-      --warning: #f5c76c;
-      --radius: 15px;
-    }
-
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font: 14px/1.5 Inter, system-ui, -apple-system, sans-serif;
-    }
-    button, input, select { font: inherit; }
-    button { cursor: pointer; }
-    button:disabled { opacity: .45; cursor: not-allowed; }
-
-    .app { min-height: 100vh; }
-    header {
-      min-height: 76px;
-      padding: 15px 4%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 15px;
-      border-bottom: 1px solid var(--border);
-      background: #0e1929;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    .brand { display: flex; align-items: center; gap: 12px; }
-    .logo {
-      width: 42px; height: 42px;
-      display: grid; place-items: center;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #5ee0bd, #328fda);
-      color: #071a22; font-weight: 900; font-size: 18px;
-    }
-    .brand h1 { font-size: 16px; margin: 0; }
-    .brand small { display: block; color: var(--muted); }
-    .header-actions { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
-
-    .container { max-width: 1250px; margin: auto; padding: 28px 4%; }
-    .topline {
-      display: flex; justify-content: space-between;
-      align-items: flex-start; gap: 16px; flex-wrap: wrap;
-      margin-bottom: 24px;
-    }
-    h2 { font-size: 25px; margin: 0 0 5px; }
-    h3 { font-size: 16px; margin: 0 0 16px; }
-    p { color: var(--muted); }
-    .muted { color: var(--muted); }
-    .small { font-size: 12px; }
-    .mono { font-family: ui-monospace, SFMono-Regular, monospace; overflow-wrap: anywhere; }
-
-    .tabs {
-      display: flex; gap: 7px; flex-wrap: wrap;
-      padding: 5px; background: var(--panel);
-      border: 1px solid var(--border); border-radius: 12px;
-      margin-bottom: 22px;
-    }
-    .tab {
-      padding: 10px 15px; border: 0; border-radius: 8px;
-      color: var(--muted); background: transparent;
-    }
-    .tab.active { background: var(--panel2); color: var(--accent); }
-
-    .grid {
-      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-    }
-    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      min-width: 0;
-    }
-    .card.full { grid-column: 1 / -1; }
-    .metric {
-      font-size: 24px; font-weight: 750; margin-top: 7px;
-      overflow-wrap: anywhere;
-    }
-    .metric-label { color: var(--muted); font-size: 12px; }
-
-    label {
-      display: block; color: var(--muted);
-      font-size: 12px; margin: 13px 0 6px;
-    }
-    input, select {
-      width: 100%; min-width: 0;
-      background: #0b1525; color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 9px; padding: 11px 12px;
-      outline: none;
-    }
-    input:focus, select:focus { border-color: var(--accent); }
-    input:disabled { opacity: .65; }
-
-    .btn {
-      padding: 10px 15px; border-radius: 9px;
-      border: 1px solid var(--border);
-      background: var(--panel2); color: var(--text);
-    }
-    .btn.primary {
-      background: var(--accent); color: #071a22;
-      border-color: var(--accent); font-weight: 750;
-    }
-    .btn.danger { color: var(--danger); border-color: #733345; }
-    .btn.ghost { background: transparent; }
-    .btn-row { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 15px; }
-    .btn.block { width: 100%; margin-top: 15px; }
-
-    .status {
-      padding: 10px 13px; border: 1px solid var(--border);
-      background: var(--panel); border-radius: 10px;
-      color: var(--muted); margin-bottom: 18px;
-      overflow-wrap: anywhere;
-    }
-    .status.success { border-color: #286b5b; color: var(--accent); }
-    .status.error { border-color: #773548; color: var(--danger); }
-    .status.warning { border-color: #765c2e; color: var(--warning); }
-
-    .pill {
-      display: inline-flex; align-items: center; gap: 6px;
-      border: 1px solid var(--border); border-radius: 30px;
-      padding: 5px 10px; font-size: 11px; color: var(--muted);
-    }
-    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
-    .dot.green { background: var(--accent); }
-    .hidden { display: none !important; }
-    .quote {
-      background: #0b1525; border: 1px solid var(--border);
-      border-radius: 10px; padding: 13px; margin-top: 13px;
-    }
-    .quote-line {
-      display: flex; justify-content: space-between; gap: 12px;
-      padding: 5px 0; color: var(--muted);
-    }
-    .quote-line strong { color: var(--text); text-align: right; }
-    .notice {
-      background: #19243a; border-left: 3px solid var(--warning);
-      padding: 11px 13px; color: var(--muted);
-      border-radius: 5px; margin-top: 13px; font-size: 12px;
-    }
-    .divider { border: 0; border-top: 1px solid var(--border); margin: 18px 0; }
-    .check { display: flex; align-items: center; gap: 9px; margin-top: 12px; color: var(--muted); }
-    .check input { width: auto; }
-    .section { margin-top: 22px; }
-    .section-title { margin: 0 0 12px; }
-    footer { text-align: center; color: var(--muted); padding: 25px; font-size: 12px; }
-
-    @media(max-width: 760px) {
-      header { position: static; align-items: flex-start; flex-direction: column; }
-      .grid, .grid.three { grid-template-columns: 1fr; }
-      .container { padding: 20px 4%; }
-      h2 { font-size: 22px; }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>INRP Adapter V3</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg:#0a0e17; --panel:#121a29; --panel2:#182337;
+  --line:#26364d; --text:#eef4ff; --muted:#91a2ba;
+  --blue:#6da8ff; --green:#36d6a0; --red:#ff7185;
+  --yellow:#f4c76b; --radius:16px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:15px/1.5 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
+a{color:var(--blue)}
+header{position:sticky;top:0;z-index:5;background:#0a0e17ed;
+  backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+.header-inner{max-width:1180px;margin:auto;padding:14px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{font-size:17px;font-weight:800;letter-spacing:.02em}
+.brand span{color:var(--blue)}
+.wallet{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+main{max-width:1180px;margin:28px auto;padding:0 20px 60px}
+.topline{display:flex;justify-content:space-between;align-items:center;
+  gap:14px;flex-wrap:wrap;margin-bottom:20px}
+h1{font-size:26px;margin:0 0 5px}
+h2{font-size:18px;margin:0 0 15px}
+h3{font-size:15px;margin:0 0 10px}
+p{color:var(--muted);margin:5px 0}
+.small{font-size:12px;color:var(--muted)}
+.muted{color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--radius);padding:19px;min-width:0}
+.span-12{grid-column:span 12}
+.span-8{grid-column:span 8}
+.span-6{grid-column:span 6}
+.span-4{grid-column:span 4}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}
+.tab,.secondary,.primary,.danger{border:1px solid var(--line);
+  border-radius:10px;padding:10px 14px;background:var(--panel2);
+  color:var(--text);font-weight:650}
+.tab.active{background:#203b61;border-color:#477ec2;color:#fff}
+.primary{background:var(--blue);color:#071326;border-color:var(--blue)}
+.danger{color:#fff;background:#642b3b;border-color:#8b3b50}
+.secondary:hover,.tab:hover{border-color:var(--blue)}
+input,select{width:100%;background:#0b1320;color:var(--text);
+  border:1px solid var(--line);border-radius:10px;padding:12px;
+  outline:none;min-width:0}
+input:focus,select:focus{border-color:var(--blue)}
+label{display:block;font-size:12px;color:var(--muted);margin:13px 0 6px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
+.metric{background:var(--panel2);border:1px solid var(--line);
+  border-radius:12px;padding:13px;min-width:0}
+.metric strong{display:block;font-size:18px;overflow-wrap:anywhere}
+.metric span{font-size:12px;color:var(--muted)}
+.status{padding:9px 12px;border:1px solid var(--line);
+  border-radius:10px;background:var(--panel2);font-size:13px;
+  overflow-wrap:anywhere}
+.status.ok{border-color:#246c59;color:var(--green)}
+.status.bad{border-color:#743747;color:var(--red)}
+.status.warn{border-color:#75603a;color:var(--yellow)}
+.hidden{display:none!important}
+hr{border:0;border-top:1px solid var(--line);margin:17px 0}
+.address{font-family:ui-monospace,monospace;font-size:12px;overflow-wrap:anywhere}
+footer{max-width:1180px;margin:auto;padding:0 20px 30px;
+  color:var(--muted);font-size:12px}
+@media(max-width:760px){
+  .span-8,.span-6,.span-4{grid-column:span 12}
+  .header-inner{align-items:flex-start;flex-direction:column}
+  main{margin-top:18px;padding:0 13px 45px}
+  .field-row{grid-template-columns:1fr}
+  h1{font-size:22px}
+}
+</style>
 </head>
-
 <body>
-<div class="app">
-  <header>
-    <div class="brand">
-      <div class="logo">IN</div>
-      <div>
-        <h1>INRP Adapter V3</h1>
-        <small>Partner-powered INRP / USDT gateway</small>
-      </div>
+<header>
+ <div class="header-inner">
+  <div class="brand">INRP <span>ADAPTER V3</span></div>
+  <div class="wallet">
+   <span id="networkStatus" class="status warn">Network not checked</span>
+   <button id="connectBtn" class="primary">Connect Wallet</button>
+   <button id="wcBtn" class="secondary">WalletConnect</button>
+   <button id="switchBtn" class="secondary">Switch to BNB</button>
+   <button id="disconnectBtn" class="secondary">Disconnect</button>
+  </div>
+ </div>
+</header>
+
+<main>
+ <div class="topline">
+  <div>
+   <h1>Adapter dashboard</h1>
+   <p>Buy and sell INRP, manage partner commissions and administer the adapter.</p>
+  </div>
+  <div id="accountStatus" class="status">Wallet disconnected</div>
+ </div>
+
+ <section class="card">
+  <h2>Adapter configuration</h2>
+  <label for="adapterAddress">Adapter V3 contract address</label>
+  <input id="adapterAddress" placeholder="0x...">
+  <div class="actions">
+   <button id="saveAdapter" class="primary">Save adapter address</button>
+   <button id="loadAdapter" class="secondary">Load contract</button>
+  </div>
+  <p class="small">The address is saved in this browser only. Confirm that it is the verified V3 deployment on BNB Chain before trading.</p>
+  <div id="contractStatus" class="status" style="margin-top:12px">Contract not loaded</div>
+ </section>
+
+ <div class="tabs">
+  <button class="tab active" data-view="trader">Trader</button>
+  <button class="tab" data-view="partner">Partner</button>
+  <button class="tab" data-view="admin">Admin</button>
+ </div>
+
+ <!-- TRADER -->
+ <section id="view-trader" class="view">
+  <div class="grid">
+   <div class="card span-6">
+    <h2>Buy INRP</h2>
+    <p>Pay USDT and receive INRP from the pool.</p>
+    <label>USDT amount (18 decimals)</label>
+    <input id="buyAmount" type="number" min="0" step="any" placeholder="100">
+    <label>Partner address</label>
+    <input id="buyPartner" placeholder="Registered partner address">
+    <label>Minimum INRP output (6 decimals)</label>
+    <input id="buyMinOut" type="number" min="0" step="any" placeholder="0">
+    <div id="buyQuote" class="status" style="margin-top:12px">Enter an amount to quote.</div>
+    <div class="actions">
+     <button id="quoteBuyBtn" class="secondary">Get quote</button>
+     <button id="buyBtn" class="primary">Approve and buy</button>
     </div>
+   </div>
 
-    <div class="header-actions">
-      <span class="pill" id="networkBadge"><span class="dot"></span> Network unknown</span>
-      <button class="btn" id="connectBtn">Connect Wallet</button>
-      <button class="btn hidden" id="wcBtn">WalletConnect</button>
-      <button class="btn hidden" id="switchBtn">Switch to BNB</button>
-      <button class="btn hidden" id="disconnectBtn">Disconnect</button>
+   <div class="card span-6">
+    <h2>Sell INRP</h2>
+    <p>Sell INRP and receive USDT from the pool.</p>
+    <label>INRP amount (6 decimals)</label>
+    <input id="sellAmount" type="number" min="0" step="any" placeholder="1000">
+    <label>Partner address</label>
+    <input id="sellPartner" placeholder="Registered partner address">
+    <label>Minimum USDT output (18 decimals)</label>
+    <input id="sellMinOut" type="number" min="0" step="any" placeholder="0">
+    <div id="sellQuote" class="status" style="margin-top:12px">Enter an amount to quote.</div>
+    <div class="actions">
+     <button id="quoteSellBtn" class="secondary">Get quote</button>
+     <button id="sellBtn" class="primary">Approve and sell</button>
     </div>
-  </header>
+   </div>
 
-  <main class="container">
-    <div class="topline">
-      <div>
-        <h2>Adapter workspace</h2>
-        <div class="muted">Trade, manage partner commissions and administer the adapter.</div>
-      </div>
-      <div class="pill" id="walletBadge">Wallet not connected</div>
+   <div class="card span-12">
+    <h2>Partner-routed trade authorization</h2>
+    <p>Sign a typed trade authorization as the user. A registered partner can submit it through the signed V3 route.</p>
+    <div class="field-row">
+     <div>
+      <label>Trade side</label>
+      <select id="signedSide"><option value="buy">Buy INRP</option><option value="sell">Sell INRP</option></select>
+     </div>
+     <div>
+      <label>Partner address (submitting partner)</label>
+      <input id="signedPartner" placeholder="Registered partner address">
+     </div>
+     <div>
+      <label>Trade amount (token base units displayed normally)</label>
+      <input id="signedAmount" type="number" min="0" step="any" placeholder="100">
+     </div>
+     <div>
+      <label>Minimum output</label>
+      <input id="signedMinOut" type="number" min="0" step="any" placeholder="0">
+     </div>
+     <div>
+      <label>Maximum adapter fee</label>
+      <input id="signedMaxFee" type="number" min="0" step="any" placeholder="0.2">
+     </div>
+     <div>
+      <label>Authorization deadline (minutes from now)</label>
+      <input id="signedDeadline" type="number" min="1" value="15">
+     </div>
     </div>
-
-    <div class="status" id="status">Connect a wallet or open this page inside Safe.</div>
-
-    <div class="card section">
-      <h3>Connection and contract</h3>
-      <div class="grid">
-        <div>
-          <label>Adapter contract address</label>
-          <input id="adapterAddress" placeholder="Enter your partner's Adapter V3 address" />
-          <div class="small muted">This is configurable. It is not automatically set to the reference deployment.</div>
-        </div>
-        <div>
-          <label>WalletConnect project ID</label>
-          <input id="projectId" value="ccef25dcfdb87869f9617936952c987d" />
-          <div class="small muted">Public WalletConnect project identifier.</div>
-        </div>
-      </div>
-      <div class="btn-row">
-        <button class="btn primary" id="saveConfigBtn">Save configuration</button>
-        <button class="btn" id="refreshBtn">Refresh on-chain data</button>
-      </div>
-      <div class="small muted" style="margin-top:12px">
-        Chain ID: 56 � BNB Smart Chain � USDT and INRP addresses are verified against the contract.
-      </div>
+    <div class="actions">
+     <button id="signTradeBtn" class="primary">Sign trade authorization</button>
+     <button id="submitSignedBtn" class="secondary">Submit signed trade as partner</button>
     </div>
+    <div id="signedStatus" class="status" style="margin-top:12px">No signed authorization.</div>
+   </div>
+  </div>
+ </section>
 
-    <div class="tabs section">
-      <button class="tab active" data-page="overview">Overview</button>
-      <button class="tab" data-page="trade">Buy / Sell</button>
-      <button class="tab" data-page="partner">Partner</button>
-      <button class="tab" data-page="admin">Admin</button>
+ <!-- PARTNER -->
+ <section id="view-partner" class="view hidden">
+  <div class="grid">
+   <div class="card span-6">
+    <h2>Partner registration</h2>
+    <p>Registration is permissionless and automatically activates the partner.</p>
+    <div id="partnerRegistrationStatus" class="status">Connect a wallet and load the contract.</div>
+    <button id="registerPartnerBtn" class="primary" style="margin-top:12px">Register as partner</button>
+   </div>
+   <div class="card span-6">
+    <h2>Partner information</h2>
+    <label>Partner address</label>
+    <input id="partnerLookup" placeholder="Defaults to connected account">
+    <button id="refreshPartnerBtn" class="secondary" style="margin-top:12px">Refresh partner information</button>
+    <div id="partnerInfo" class="status" style="margin-top:12px">No partner loaded.</div>
+   </div>
+   <div class="card span-6">
+    <h2>Partner payout settings</h2>
+    <label>New payout address</label>
+    <input id="payoutAddress" placeholder="0x...">
+    <button id="setPayoutBtn" class="secondary">Update payout address</button>
+    <hr>
+    <label>Payout mode</label>
+    <select id="payoutMode">
+     <option value="true">Automatic payout</option>
+     <option value="false">Accumulate and claim</option>
+    </select>
+    <button id="setPayoutModeBtn" class="secondary" style="margin-top:10px">Update payout mode</button>
+   </div>
+   <div class="card span-6">
+    <h2>Commission balances</h2>
+    <div id="commissionBalances" class="status">No balance loaded.</div>
+    <label>Claim token</label>
+    <select id="claimToken">
+     <option value="USDT">USDT</option>
+     <option value="INRP">INRP</option>
+    </select>
+    <label>Claim amount (leave blank to claim all)</label>
+    <input id="claimAmount" type="number" min="0" step="any" placeholder="Full balance">
+    <button id="claimBtn" class="primary" style="margin-top:12px">Claim commission</button>
+   </div>
+  </div>
+ </section>
+
+ <!-- ADMIN -->
+ <section id="view-admin" class="view hidden">
+  <div class="grid">
+   <div class="card span-6">
+    <h2>Adapter administration</h2>
+    <div id="adminStatus" class="status">Connect the owner wallet to check permissions.</div>
+    <label>Adapter fee (basis points)</label>
+    <input id="adminFee" type="number" min="0" max="300" placeholder="20">
+    <button id="setFeeBtn" class="secondary">Set adapter fee</button>
+    <label>Default partner share (basis points)</label>
+    <input id="adminShare" type="number" min="0" max="10000" placeholder="7500">
+    <button id="setShareBtn" class="secondary">Set default partner share</button>
+    <label>Automatic owner fee transfer</label>
+    <select id="ownerAuto"><option value="true">Enabled</option><option value="false">Disabled</option></select>
+    <button id="setOwnerAutoBtn" class="secondary">Update owner payout mode</button>
+    <div class="actions">
+     <button id="pauseBtn" class="danger">Pause</button>
+     <button id="unpauseBtn" class="secondary">Unpause</button>
     </div>
+   </div>
 
-    <!-- OVERVIEW -->
-    <section id="page-overview">
-      <div class="grid three">
-        <div class="card">
-          <div class="metric-label">Adapter fee</div>
-          <div class="metric" id="metricFee">�</div>
-          <div class="small muted">Basis points</div>
-        </div>
-        <div class="card">
-          <div class="metric-label">Default partner share</div>
-          <div class="metric" id="metricShare">�</div>
-          <div class="small muted">Basis points</div>
-        </div>
-        <div class="card">
-          <div class="metric-label">Contract status</div>
-          <div class="metric" id="metricPaused">�</div>
-          <div class="small muted">Live on-chain state</div>
-        </div>
-      </div>
+   <div class="card span-6">
+    <h2>Partner administration</h2>
+    <label>Partner address</label>
+    <input id="adminPartner" placeholder="0x...">
+    <label>Partner commission share (basis points)</label>
+    <input id="adminPartnerShare" type="number" min="0" max="10000" placeholder="7500">
+    <div class="actions">
+     <button id="setPartnerShareBtn" class="secondary">Set partner share</button>
+     <button id="blacklistBtn" class="danger">Blacklist partner</button>
+     <button id="unblacklistBtn" class="secondary">Unblacklist partner</button>
+    </div>
+   </div>
 
-      <div class="grid section">
-        <div class="card">
-          <h3>Connected account</h3>
-          <div class="metric-label">Address</div>
-          <div class="mono" id="overviewAddress">Not connected</div>
-          <hr class="divider" />
-          <div class="metric-label">Detected role</div>
-          <div class="metric" id="overviewRole">�</div>
-          <div class="small muted">Role is derived from on-chain owner and partner status.</div>
-        </div>
-        <div class="card">
-          <h3>Contract dependencies</h3>
-          <div class="metric-label">POOL</div>
-          <div class="mono small" id="poolAddress">�</div>
-          <div class="metric-label" style="margin-top:12px">USDT</div>
-          <div class="mono small" id="usdtAddress">�</div>
-          <div class="metric-label" style="margin-top:12px">INRP</div>
-          <div class="mono small" id="inrpAddress">�</div>
-        </div>
-      </div>
-    </section>
+   <div class="card span-6">
+    <h2>Withdraw accrued owner fees</h2>
+    <label>Token</label>
+    <select id="withdrawToken"><option value="USDT">USDT</option><option value="INRP">INRP</option></select>
+    <label>Amount (leave blank to withdraw all accrued)</label>
+    <input id="withdrawAmount" type="number" min="0" step="any">
+    <button id="withdrawBtn" class="primary">Withdraw fees</button>
+   </div>
 
-    <!-- TRADE -->
-    <section id="page-trade" class="hidden">
-      <div class="grid">
-        <div class="card">
-          <h3>Buy INRP</h3>
-          <div class="muted small">Spend USDT and receive INRP through your registered partner.</div>
-          <label>USDT amount</label>
-          <input id="buyAmount" type="number" min="0" step="any" placeholder="100" />
-          <label>Partner address</label>
-          <input id="buyPartner" placeholder="0x..." />
-          <label>Minimum INRP output</label>
-          <input id="buyMinOut" type="text" placeholder="Calculated from quote" />
-          <label>Maximum adapter fee (USDT)</label>
-          <input id="buyMaxFee" type="text" placeholder="Calculated from quote" />
-          <div class="quote" id="buyQuote">
-            <div class="muted small">Enter an amount and request a quote.</div>
-          </div>
-          <button class="btn block" id="buyQuoteBtn">Get buy quote</button>
-          <button class="btn primary block" id="buyBtn" disabled>Approve USDT and buy INRP</button>
-        </div>
+   <div class="card span-6">
+    <h2>Rescue assets</h2>
+    <p>USDT/INRP partner and owner fee liabilities are reserved by the contract.</p>
+    <label>Token address (use zero address for BNB)</label>
+    <input id="rescueToken" placeholder="Token contract address">
+    <label>Amount (leave blank to rescue maximum permitted)</label>
+    <input id="rescueAmount" type="number" min="0" step="any">
+    <label>Recipient</label>
+    <input id="rescueRecipient" placeholder="0x...">
+    <button id="rescueBtn" class="danger">Rescue asset</button>
+   </div>
 
-        <div class="card">
-          <h3>Sell INRP</h3>
-          <div class="muted small">Sell INRP and receive USDT through your registered partner.</div>
-          <label>INRP amount</label>
-          <input id="sellAmount" type="number" min="0" step="any" placeholder="1000" />
-          <label>Partner address</label>
-          <input id="sellPartner" placeholder="0x..." />
-          <label>Minimum USDT output</label>
-          <input id="sellMinOut" type="text" placeholder="Calculated from quote" />
-          <label>Maximum adapter fee (INRP)</label>
-          <input id="sellMaxFee" type="text" placeholder="Calculated from quote" />
-          <div class="quote" id="sellQuote">
-            <div class="muted small">Enter an amount and request a quote.</div>
-          </div>
-          <button class="btn block" id="sellQuoteBtn">Get sell quote</button>
-          <button class="btn primary block" id="sellBtn" disabled>Approve INRP and sell</button>
-        </div>
-      </div>
-      <div class="notice">
-        Quotes are on-chain estimates, not guaranteed execution prices. Review the minimum output and maximum fee before submitting. The pool can change between quote and execution.
-      </div>
-    </section>
+   <div class="card span-12">
+    <h2>Ownership transfer</h2>
+    <label>New owner</label>
+    <input id="nextOwner" placeholder="0x...">
+    <button id="transferOwnerBtn" class="danger">Transfer ownership</button>
+   </div>
+  </div>
+ </section>
 
-    <!-- PARTNER -->
-    <section id="page-partner" class="hidden">
-      <div class="grid">
-        <div class="card">
-          <h3>Partner registration</h3>
-          <div class="muted small">Registration uses the connected wallet address. The contract generates or assigns the referral code according to its implementation.</div>
-          <button class="btn primary block" id="registerBtn">Register as partner</button>
-          <hr class="divider" />
-          <div class="metric-label">Referral code</div>
-          <div class="metric mono" id="referralCode">�</div>
-          <div class="metric-label" style="margin-top:12px">Partner status</div>
-          <div class="metric" id="partnerStatus">�</div>
-          <div class="metric-label" style="margin-top:12px">Commission share</div>
-          <div class="metric" id="partnerShare">�</div>
-        </div>
+ <section class="card" style="margin-top:18px">
+  <h2>Transaction and connection messages</h2>
+  <div id="messages" class="status">Ready.</div>
+  <p class="small">Always check the destination address, token amount, fee, network and transaction details in your wallet or Safe before confirming.</p>
+ </section>
+</main>
 
-        <div class="card">
-          <h3>Partner payout settings</h3>
-          <label>Payout address</label>
-          <input id="payoutAddress" placeholder="0x..." />
-          <button class="btn block" id="savePayoutBtn">Update payout address</button>
-          <label class="check">
-            <input type="checkbox" id="automaticPayout" />
-            Automatic partner fee payout
-          </label>
-          <button class="btn block" id="savePayoutModeBtn">Save payout mode</button>
-          <div class="notice">When automatic payout is disabled, commission remains claimable in the adapter.</div>
-        </div>
-
-        <div class="card full">
-          <h3>Claimable partner fees</h3>
-          <div class="grid">
-            <div>
-              <div class="metric-label">USDT claimable</div>
-              <div class="metric" id="claimUsdt">�</div>
-              <label>USDT amount to claim</label>
-              <input id="claimUsdtAmount" type="number" min="0" step="any" placeholder="0" />
-              <button class="btn primary block" id="claimUsdtBtn">Claim USDT</button>
-            </div>
-            <div>
-              <div class="metric-label">INRP claimable</div>
-              <div class="metric" id="claimInrp">�</div>
-              <label>INRP amount to claim</label>
-              <input id="claimInrpAmount" type="number" min="0" step="any" placeholder="0" />
-              <button class="btn primary block" id="claimInrpBtn">Claim INRP</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ADMIN -->
-    <section id="page-admin" class="hidden">
-      <div class="status warning">Admin controls are enabled only when the connected account matches the contract's current owner(). If the owner is a Safe, transactions are submitted to Safe for approval/execution.</div>
-
-      <div class="grid">
-        <div class="card">
-          <h3>Adapter fee</h3>
-          <label>New fee (basis points)</label>
-          <input id="newFee" type="number" min="0" max="300" placeholder="20" />
-          <button class="btn primary block admin-write" data-method="setAdapterFeeBps">Update adapter fee</button>
-        </div>
-
-        <div class="card">
-          <h3>Default partner share</h3>
-          <label>New share (basis points)</label>
-          <input id="newShare" type="number" min="0" max="10000" placeholder="7500" />
-          <button class="btn primary block admin-write" data-method="setDefaultPartnerShareBps">Update default share</button>
-        </div>
-
-        <div class="card">
-          <h3>Automatic owner fee transfer</h3>
-          <label class="check"><input type="checkbox" id="automaticFeeTransfer" /> Enable automatic owner fee transfer</label>
-          <button class="btn block admin-write" data-method="setAutomaticFeeTransfer">Save setting</button>
-        </div>
-
-        <div class="card">
-          <h3>Pause controls</h3>
-          <div class="btn-row">
-            <button class="btn danger admin-write" data-method="pause">Pause adapter</button>
-            <button class="btn primary admin-write" data-method="unpause">Unpause adapter</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>Partner commission override</h3>
-          <label>Partner address</label>
-          <input id="overridePartner" placeholder="0x..." />
-          <label>New share (basis points)</label>
-          <input id="overrideShare" type="number" min="0" max="10000" placeholder="7500" />
-          <button class="btn primary block admin-write" data-method="setPartnerCommissionShare">Update partner share</button>
-        </div>
-
-        <div class="card">
-          <h3>Partner blacklist</h3>
-          <label>Partner address</label>
-          <input id="blacklistPartner" placeholder="0x..." />
-          <div class="btn-row">
-            <button class="btn danger admin-write" data-method="blacklistPartner">Blacklist</button>
-            <button class="btn admin-write" data-method="unblacklistPartner">Unblacklist</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>Withdraw accrued owner fees</h3>
-          <label>Token</label>
-          <select id="withdrawToken">
-            <option value="USDT">USDT</option>
-            <option value="INRP">INRP</option>
-          </select>
-          <label>Amount</label>
-          <input id="withdrawAmount" type="number" min="0" step="any" placeholder="0" />
-          <button class="btn primary block admin-write" data-method="withdrawAdapterFees">Withdraw fees to owner</button>
-        </div>
-
-        <div class="card">
-          <h3>Transfer ownership</h3>
-          <label>New owner address</label>
-          <input id="newOwner" placeholder="0x..." />
-          <button class="btn danger block admin-write" data-method="transferOwnership">Transfer ownership</button>
-          <div class="notice">This is a sensitive and potentially irreversible administrative action. Verify the destination carefully.</div>
-        </div>
-
-        <div class="card">
-          <h3>Rescue token</h3>
-          <label>Token address</label>
-          <input id="rescueToken" placeholder="0x..." />
-          <label>Amount (token units)</label>
-          <input id="rescueAmount" type="number" min="0" step="any" placeholder="0" />
-          <label>Recipient</label>
-          <input id="rescueRecipient" placeholder="0x..." />
-          <button class="btn danger block admin-write" data-method="rescueToken">Rescue token</button>
-        </div>
-
-        <div class="card">
-          <h3>Rescue BNB</h3>
-          <label>Amount (BNB)</label>
-          <input id="rescueBnbAmount" type="number" min="0" step="any" placeholder="0" />
-          <label>Recipient</label>
-          <input id="rescueBnbRecipient" placeholder="0x..." />
-          <button class="btn danger block admin-write" data-method="rescueBNB">Rescue BNB</button>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    INRP Adapter V3 � BNB Smart Chain � Always verify the contract address before signing.
-  </footer>
-</div>
+<footer>
+ BNB Chain � Chain ID 56 � Adapter V3 � Verify the deployed contract and token addresses independently before use.
+</footer>
 
 <script type="module">
 import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.13.5/+esm";
-import EthereumProvider from "https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/+esm";
-import SafeAppsSDK from "https://cdn.jsdelivr.net/npm/@safe-global/safe-apps-sdk@9.1.0/+esm";
-
-/* ---------------- CONFIGURATION ---------------- */
+import EthereumProvider from "https://esm.sh/@walletconnect/ethereum-provider@2.17.0";
+import SafeAppsSDK from "https://esm.sh/@safe-global/safe-apps-sdk@9.1.0";
 
 const CHAIN_ID = 56;
 const CHAIN_HEX = "0x38";
-const RPC_URL = "https://bsc-dataseed.binance.org/";
+const WC_PROJECT_ID = "ccef25dcfdb87869f9617936952c987d";
 
-const EXPECTED = {
-  POOL: "0xdfC44A2cb792BA070DF2D75a650C49147EfF6e66",
+const TOKENS = {
   USDT: "0x55d398326f99059fF775485246999027B3197955",
   INRP: "0x33987b4B97033DfB0943c4eE67C4aaDD146eE580"
 };
+const POOL = "0xdfC44A2cb792BA070DF2D75a650C49147EfF6e66";
+const ZERO = ethers.ZeroAddress;
+const MAX_UINT = ethers.MaxUint256;
 
-const ADAPTER_DEFAULT = "0x8B91D7b89B255B926860fD50DD2251b93Fad7Ce3";
-
-const ABI = [
-  "function owner() view returns(address)",
-  "function paused() view returns(bool)",
-  "function adapterFeeBps() view returns(uint256)",
-  "function defaultPartnerShareBps() view returns(uint256)",
-  "function automaticFeeTransfer() view returns(bool)",
-  "function POOL() view returns(address)",
-  "function USDT() view returns(address)",
-  "function INRP() view returns(address)",
-  "function accruedUSDTFees() view returns(uint256)",
-  "function accruedINRPFees() view returns(uint256)",
-  "function adapterUSDTBalance() view returns(uint256)",
-  "function adapterINRPBalance() view returns(uint256)",
-  "function adapterBNBBalance() view returns(uint256)",
-  "function totalPartnerLiabilityUSDT() view returns(uint256)",
-  "function totalPartnerLiabilityINRP() view returns(uint256)",
-
-  "function quoteBuyWithAdapterFee(uint256) view returns(uint256 lpFee,uint256 inrpOut,uint256 adapterFee,uint256 totalUsdtRequired)",
-  "function quoteSellWithAdapterFee(uint256) view returns(uint256 usdtGross,uint256 lpFee,uint256 usdtOut,uint256 adapterFee,uint256 totalInrpRequired)",
-  "function calculateAdapterFee(uint256) view returns(uint256)",
-
-  "function registerPartner()",
-  "function getPartnerInfo(address) view returns(address payoutAddress,uint256 commissionShareBps,bool registered,bool active,bool automaticPayout,bytes32 referralCode,uint256 registeredAt)",
-  "function getPartnerAccruedFees(address) view returns(uint256 usdtBalance,uint256 inrpBalance)",
-  "function getPartnerStats(address) view returns(uint256 buyVolumeUSDT,uint256 sellVolumeINRP,uint256 buyTrades,uint256 sellTrades,uint256 adapterFeesGeneratedUSDT,uint256 adapterFeesGeneratedINRP,uint256 commissionEarnedUSDT,uint256 commissionEarnedINRP,uint256 commissionPaidUSDT,uint256 commissionPaidINRP,uint256 commissionClaimedUSDT,uint256 commissionClaimedINRP)",
-  "function setPartnerPayoutAddress(address)",
-  "function setPartnerPayoutMode(bool)",
-  "function claimPartnerFees(address,uint256)",
-
-  "function buyINRPForPartner(uint256 amount,uint256 minOut,uint256 maxAdapterFee,address partner)",
-  "function sellINRPForPartner(uint256 amount,uint256 minOut,uint256 maxAdapterFee,address partner)",
-
-  "function setAdapterFeeBps(uint256)",
-  "function setDefaultPartnerShareBps(uint256)",
-  "function setAutomaticFeeTransfer(bool)",
-  "function setPartnerCommissionShare(address,uint256)",
-  "function blacklistPartner(address)",
-  "function unblacklistPartner(address)",
-  "function pause()",
-  "function unpause()",
-  "function withdrawAdapterFees(address,uint256)",
-  "function rescueToken(address,uint256,address)",
-  "function rescueBNB(uint256,address)",
-  "function transferOwnership(address)"
+const ADAPTER_ABI = [
+ "function owner() view returns(address)",
+ "function paused() view returns(bool)",
+ "function adapterFeeBps() view returns(uint256)",
+ "function defaultPartnerShareBps() view returns(uint256)",
+ "function automaticFeeTransfer() view returns(bool)",
+ "function MAX_ADAPTER_FEE_BPS() view returns(uint256)",
+ "function MAX_PARTNER_SHARE_BPS() view returns(uint256)",
+ "function DEFAULT_ADAPTER_FEE_BPS() view returns(uint256)",
+ "function DEFAULT_PARTNER_SHARE_BPS() view returns(uint256)",
+ "function FEE_DENOMINATOR() view returns(uint256)",
+ "function POOL() view returns(address)",
+ "function USDT() view returns(address)",
+ "function INRP() view returns(address)",
+ "function nonces(address) view returns(uint256)",
+ "function getNonce(address) view returns(uint256)",
+ "function referralCodeOwner(bytes32) view returns(address)",
+ "function partnerBlacklisted(address) view returns(bool)",
+ "function partnerAccruedFees(address,address) view returns(uint256)",
+ "function totalPartnerLiabilityUSDT() view returns(uint256)",
+ "function totalPartnerLiabilityINRP() view returns(uint256)",
+ "function accruedUSDTFees() view returns(uint256)",
+ "function accruedINRPFees() view returns(uint256)",
+ "function adapterUSDTBalance() view returns(uint256)",
+ "function adapterINRPBalance() view returns(uint256)",
+ "function adapterBNBBalance() view returns(uint256)",
+ "function getPartnerInfo(address) view returns(address,uint256,bool,bool,bool,bytes32,uint256)",
+ "function getPartnerAccruedFees(address) view returns(uint256,uint256)",
+ "function getPartnerStats(address) view returns(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)",
+ "function getPartnerBuyVolume(address) view returns(uint256)",
+ "function getPartnerSellVolume(address) view returns(uint256)",
+ "function getGlobalStats() view returns(uint256,uint256,uint256,uint256,uint256,uint256)",
+ "function getFeeAccounting(address) view returns(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)",
+ "function calculateAdapterFee(uint256) view returns(uint256)",
+ "function quoteBuy(uint256) view returns(uint256,uint256)",
+ "function quoteSell(uint256) view returns(uint256,uint256,uint256)",
+ "function quoteBuyWithAdapterFee(uint256) view returns(uint256,uint256,uint256,uint256)",
+ "function quoteSellWithAdapterFee(uint256) view returns(uint256,uint256,uint256,uint256,uint256)",
+ "function getTradeDigest(address,bool,uint256,uint256,uint256,uint256,uint256) view returns(bytes32)",
+ "function registerPartner()",
+ "function setPartnerPayoutAddress(address)",
+ "function setPartnerPayoutMode(bool)",
+ "function claimPartnerFees(address,uint256)",
+ "function buyINRPForPartner(uint256,uint256,uint256,address)",
+ "function sellINRPForPartner(uint256,uint256,uint256,address)",
+ "function buyINRPFor(address,uint256,uint256,uint256,uint256,uint256,bytes)",
+ "function sellINRPFor(address,uint256,uint256,uint256,uint256,uint256,bytes)",
+ "function setAdapterFeeBps(uint256)",
+ "function setDefaultPartnerShareBps(uint256)",
+ "function setAutomaticFeeTransfer(bool)",
+ "function setPartnerCommissionShare(address,uint256)",
+ "function blacklistPartner(address)",
+ "function unblacklistPartner(address)",
+ "function pause()",
+ "function unpause()",
+ "function withdrawAdapterFees(address,uint256)",
+ "function rescueToken(address,uint256,address)",
+ "function rescueBNB(uint256,address)",
+ "function transferOwnership(address)"
 ];
 
 const ERC20_ABI = [
-  "function decimals() view returns(uint8)",
-  "function symbol() view returns(string)",
-  "function balanceOf(address) view returns(uint256)",
-  "function allowance(address,address) view returns(uint256)",
-  "function approve(address,uint256) returns(bool)"
+ "function balanceOf(address) view returns(uint256)",
+ "function allowance(address,address) view returns(uint256)",
+ "function approve(address,uint256) returns(bool)",
+ "function decimals() view returns(uint8)",
+ "function symbol() view returns(string)"
 ];
 
-/* ---------------- STATE ---------------- */
+const EIP712_DOMAIN = {
+ name: "FixedRateUsdInrPoolAdapter",
+ version: "3",
+ chainId: CHAIN_ID
+};
+const TRADE_TYPES = {
+ Trade: [
+  {name:"user",type:"address"},
+  {name:"isBuy",type:"bool"},
+  {name:"amount",type:"uint256"},
+  {name:"minOut",type:"uint256"},
+  {name:"maxAdapterFee",type:"uint256"},
+  {name:"nonce",type:"uint256"},
+  {name:"deadline",type:"uint256"}
+ ]
+};
 
+let injectedProvider = null;
+let wcProvider = null;
+let safeSdk = null;
+let safeMode = false;
 let provider = null;
 let signer = null;
 let account = null;
 let adapter = null;
 let readAdapter = null;
-let safeSdk = null;
-let safeMode = false;
-let safeInfo = null;
-let wcProvider = null;
-let ownerAddress = null;
-let isOwner = false;
-let partnerInfo = null;
-let quoteBuyData = null;
-let quoteSellData = null;
-let tokenContracts = {};
+let adapterAddress = localStorage.getItem("inrp.adapter.v3") || "";
+let lastAuthorization = null;
 
 const $ = id => document.getElementById(id);
+const fmt = (v,d=4) => Number(v).toLocaleString(undefined,{maximumFractionDigits:d});
+const addrOK = a => ethers.isAddress(a);
+const short = a => a ? a.slice(0,6)+"�"+a.slice(-4) : "�";
+const units = (v,d) => ethers.parseUnits(String(v || "0"),d);
+const parse = (v,d) => ethers.formatUnits(v,d);
+const msg = (s,kind="") => {
+ $("messages").textContent=s;
+ $("messages").className="status "+kind;
+};
+const contractMsg = (s,kind="") => {
+ $("contractStatus").textContent=s;
+ $("contractStatus").className="status "+kind;
+};
+const isSafe = () => safeMode && !!safeSdk;
 
-function setStatus(message, type = "") {
-  const el = $("status");
-  el.textContent = message;
-  el.className = "status " + type;
+function getAdapterAddress(){
+ const a=$("adapterAddress").value.trim();
+ if(!addrOK(a)) throw Error("Enter a valid adapter contract address.");
+ return ethers.getAddress(a);
 }
-
-function shortAddress(address) {
-  return address ? address.slice(0, 6) + "..." + address.slice(-4) : "�";
+function requireAccount(){
+ if(!account) throw Error("Connect a wallet first.");
 }
-
-function validAddress(value) {
-  return ethers.isAddress(value);
+function requireContract(){
+ if(!adapter || !readAdapter) throw Error("Load the adapter contract first.");
 }
-
-function requireAccount() {
-  if (!account) throw new Error("Connect a wallet first.");
-  if (!provider) throw new Error("Wallet provider unavailable.");
+function tokenContract(symbol,runner=provider){
+ return new ethers.Contract(TOKENS[symbol],ERC20_ABI,runner);
 }
+function getTokenDecimals(symbol){return symbol==="USDT"?18:6;}
 
-function requireContract() {
-  if (!adapter) throw new Error("Set a valid adapter address and connect.");
-}
-
-function requireNetwork() {
-  if (!provider) throw new Error("Wallet not connected.");
-  if (!safeMode && Number(provider._network?.chainId) !== CHAIN_ID) {
-    throw new Error("Switch your wallet to BNB Smart Chain first.");
+async function initSafe(){
+ try{
+  const sdk = new SafeAppsSDK();
+  const info = await sdk.safe.getInfo();
+  if(info && info.safeAddress){
+   safeSdk=sdk;
+   safeMode=true;
+   account=ethers.getAddress(info.safeAddress);
+   const safeProvider=await sdk.safe.getProvider();
+   provider=new ethers.BrowserProvider(safeProvider);
+   signer=null;
+   $("connectBtn").classList.add("hidden");
+   $("wcBtn").classList.add("hidden");
+   $("accountStatus").textContent="Safe App � "+short(account);
+   msg("Safe App detected. Transactions will be submitted through Safe.");
+   await checkNetwork();
+   await loadContract();
+   return true;
   }
+ }catch(e){
+  // Normal browser environment: Safe Apps SDK detection may fail.
+ }
+ return false;
 }
 
-function parseAmount(value, decimals) {
-  if (!value || !Number.isFinite(Number(value)) || Number(value) <= 0) {
-    throw new Error("Enter a valid amount greater than zero.");
-  }
-  return ethers.parseUnits(String(value), decimals);
+async function setupWallet(p){
+ provider=new ethers.BrowserProvider(p);
+ const network=await provider.getNetwork();
+ if(Number(network.chainId)!==CHAIN_ID) throw Error("Please switch to BNB Chain.");
+ const accounts=await provider.send("eth_accounts",[]);
+ if(!accounts.length) throw Error("No connected account.");
+ account=ethers.getAddress(accounts[0]);
+ signer=await provider.getSigner();
+ adapter=adapterAddress ? new ethers.Contract(adapterAddress,ADAPTER_ABI,signer) : null;
+ readAdapter=adapterAddress ? new ethers.Contract(adapterAddress,ADAPTER_ABI,provider) : null;
+ updateWalletUI();
+ await checkNetwork();
+ if(adapterAddress) await loadContract();
 }
 
-function formatAmount(value, decimals, places = 6) {
-  return Number(ethers.formatUnits(value, decimals)).toLocaleString(undefined, {
-    maximumFractionDigits: places
+function updateWalletUI(){
+ $("accountStatus").textContent=account?(safeMode?"Safe � ":"Connected � ")+short(account):"Wallet disconnected";
+ $("disconnectBtn").classList.toggle("hidden",!account);
+ $("switchBtn").classList.toggle("hidden",!account);
+}
+
+async function connectInjected(){
+ try{
+  if(safeMode) return;
+  if(!window.ethereum) throw Error("No injected wallet found.");
+  injectedProvider=window.ethereum;
+  await injectedProvider.request({method:"eth_requestAccounts"});
+  await setupWallet(injectedProvider);
+  msg("Wallet connected.","ok");
+ }catch(e){msg(e.message||String(e),"bad");}
+}
+
+async function connectWalletConnect(){
+ try{
+  if(safeMode) return;
+  wcProvider=await EthereumProvider.init({
+   projectId:WC_PROJECT_ID,
+   chains:[CHAIN_ID],
+   showQrModal:true,
+   methods:["eth_sendTransaction","personal_sign","eth_signTypedData_v4","eth_accounts","eth_chainId"],
+   events:["chainChanged","accountsChanged"],
+   metadata:{
+    name:"INRP Adapter V3",
+    description:"INRP partner and trader interface",
+    url:location.origin,
+    icons:[]
+   }
   });
-}
-
-function configAddress() {
-  const value = $("adapterAddress").value.trim();
-  if (!validAddress(value)) throw new Error("Enter a valid adapter contract address.");
-  return ethers.getAddress(value);
-}
-
-function showPage(name) {
-  document.querySelectorAll("[id^='page-']").forEach(el => el.classList.add("hidden"));
-  $("page-" + name).classList.remove("hidden");
-  document.querySelectorAll(".tab").forEach(el =>
-    el.classList.toggle("active", el.dataset.page === name)
-  );
-}
-
-document.querySelectorAll(".tab").forEach(btn =>
-  btn.addEventListener("click", () => showPage(btn.dataset.page))
-);
-
-/* ---------------- CONTRACT SETUP ---------------- */
-
-function setupContracts() {
-  const address = configAddress();
-  if (!provider) throw new Error("Connect a wallet first.");
-  readAdapter = new ethers.Contract(address, ABI, provider);
-  adapter = signer ? readAdapter.connect(signer) : readAdapter;
-  tokenContracts = {
-    USDT: new ethers.Contract(EXPECTED.USDT, ERC20_ABI, provider),
-    INRP: new ethers.Contract(EXPECTED.INRP, ERC20_ABI, provider)
-  };
-}
-
-async function verifyDependencies() {
-  requireContract();
-  const [pool, usdt, inrp] = await Promise.all([
-    readAdapter.POOL(), readAdapter.USDT(), readAdapter.INRP()
-  ]);
-
-  if (pool.toLowerCase() !== EXPECTED.POOL.toLowerCase() ||
-      usdt.toLowerCase() !== EXPECTED.USDT.toLowerCase() ||
-      inrp.toLowerCase() !== EXPECTED.INRP.toLowerCase()) {
-    throw new Error("Contract dependency mismatch. This adapter does not match the configured V3 token/pool addresses.");
-  }
-
-  $("poolAddress").textContent = pool;
-  $("usdtAddress").textContent = usdt;
-  $("inrpAddress").textContent = inrp;
-}
-
-/* ---------------- WALLET CONNECTION ---------------- */
-
-async function connectBrowserWallet() {
-  if (safeMode) throw new Error("Wallet connection is managed by Safe in Safe mode.");
-  if (!window.ethereum) throw new Error("No injected wallet found. Use WalletConnect.");
-
-  provider = new ethers.BrowserProvider(window.ethereum);
-  await provider.send("eth_requestAccounts", []);
-  signer = await provider.getSigner();
-  account = await signer.getAddress();
-
-  await updateWalletUI();
-  await initializeContract();
-}
-
-async function connectWalletConnect() {
-  if (safeMode) throw new Error("WalletConnect is disabled inside Safe.");
-  const projectId = $("projectId").value.trim();
-  if (!projectId) throw new Error("Enter a WalletConnect project ID.");
-
-  wcProvider = await EthereumProvider.init({
-    projectId,
-    chains: [CHAIN_ID],
-    showQrModal: true,
-    rpcMap: { [CHAIN_ID]: RPC_URL },
-    methods: ["eth_sendTransaction", "personal_sign", "eth_signTypedData_v4"],
-    events: ["chainChanged", "accountsChanged"]
-  });
-
   await wcProvider.connect();
-  provider = new ethers.BrowserProvider(wcProvider);
-  signer = await provider.getSigner();
-  account = await signer.getAddress();
-
-  await updateWalletUI();
-  await initializeContract();
+  await setupWallet(wcProvider);
+  msg("WalletConnect connected.","ok");
+ }catch(e){msg(e.message||String(e),"bad");}
 }
 
-async function detectSafe() {
-  try {
-    safeSdk = new SafeAppsSDK();
-    safeInfo = await safeSdk.safe.getInfo();
-    if (safeInfo && safeInfo.safeAddress) {
-      safeMode = true;
-      account = ethers.getAddress(safeInfo.safeAddress);
-      provider = new ethers.JsonRpcProvider(RPC_URL);
-      signer = null;
-      $("connectBtn").classList.add("hidden");
-      $("wcBtn").classList.add("hidden");
-      $("disconnectBtn").classList.remove("hidden");
-      $("switchBtn").classList.remove("hidden");
-      await updateWalletUI();
-      await initializeContract();
-      setStatus("Safe App detected. Writes will be submitted through the Safe transaction interface.", "success");
-      return true;
-    }
-  } catch (err) {
-    safeMode = false;
-  }
-  return false;
+async function disconnect(){
+ try{
+  if(wcProvider) await wcProvider.disconnect();
+  if(injectedProvider && injectedProvider.removeAllListeners) injectedProvider.removeAllListeners("accountsChanged");
+ }catch(e){}
+ provider=null;signer=null;account=null;wcProvider=null;injectedProvider=null;
+ if(safeMode){msg("Safe App connection is managed by the Safe environment.");return;}
+ updateWalletUI();
+ $("accountStatus").textContent="Wallet disconnected";
+ msg("Wallet disconnected.");
 }
 
-async function updateWalletUI() {
-  $("walletBadge").textContent = account ? shortAddress(account) : "Wallet not connected";
-  $("overviewAddress").textContent = account || "Not connected";
-  $("disconnectBtn").classList.toggle("hidden", !account);
-  $("connectBtn").classList.toggle("hidden", safeMode || !!account);
-  $("wcBtn").classList.toggle("hidden", safeMode || !!account);
-  $("switchBtn").classList.toggle("hidden", !account);
-  $("networkBadge").innerHTML = '<span class="dot green"></span> BNB Chain';
+async function checkNetwork(){
+ try{
+  if(!provider){$("networkStatus").textContent="Network not connected";return;}
+  const n=await provider.getNetwork();
+  const good=Number(n.chainId)===CHAIN_ID;
+  $("networkStatus").textContent=good?"BNB Chain � 56":"Wrong network";
+  $("networkStatus").className="status "+(good?"ok":"bad");
+  if(!good) throw Error("Wrong network. Switch to BNB Chain.");
+ }catch(e){$("networkStatus").className="status bad";throw e;}
 }
 
-async function switchToBnb() {
-  if (safeMode) {
-    setStatus("Safe Apps run on the network selected by the Safe interface. Switch the Safe to BNB Smart Chain there.", "warning");
-    return;
+async function switchNetwork(){
+ try{
+  const p=safeMode ? null : (wcProvider||injectedProvider);
+  if(!p) throw Error("No switchable wallet connection.");
+  try{
+   await p.request({method:"wallet_switchEthereumChain",params:[{chainId:CHAIN_HEX}]});
+  }catch(e){
+   if(e.code===4902){
+    await p.request({method:"wallet_addEthereumChain",params:[{
+     chainId:CHAIN_HEX,
+     chainName:"BNB Smart Chain",
+     nativeCurrency:{name:"BNB",symbol:"BNB",decimals:18},
+     rpcUrls:["https://bsc-dataseed.binance.org/"],
+     blockExplorerUrls:["https://bscscan.com/"]
+    }]});
+   }else throw e;
   }
-  if (!window.ethereum) throw new Error("Wallet provider unavailable.");
-  try {
-    await window.ethereum.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: CHAIN_HEX }]
-    });
-  } catch (error) {
-    if (error.code !== 4902) throw error;
-    await window.ethereum.request({
-      method: "wallet_addEthereumChain",
-      params: [{
-        chainId: CHAIN_HEX,
-        chainName: "BNB Smart Chain",
-        nativeCurrency: { name: "BNB", symbol: "BNB", decimals: 18 },
-        rpcUrls: [RPC_URL],
-        blockExplorerUrls: ["https://bscscan.com"]
-      }]
-    });
-  }
-  await initializeContract();
+  await checkNetwork();
+  msg("BNB Chain selected.","ok");
+ }catch(e){msg(e.message||String(e),"bad");}
 }
 
-async function disconnectWallet() {
-  if (wcProvider) {
-    try { await wcProvider.disconnect(); } catch {}
+async function loadContract(){
+ try{
+  adapterAddress=getAdapterAddress();
+  localStorage.setItem("inrp.adapter.v3",adapterAddress);
+  if(!provider){
+   contractMsg("Address saved. Connect wallet to load the contract.","warn");
+   return;
   }
-  if (safeMode) {
-    setStatus("Safe App connection is controlled by the Safe environment.", "warning");
-    return;
+  readAdapter=new ethers.Contract(adapterAddress,ADAPTER_ABI,provider);
+  adapter=signer?readAdapter.connect(signer):null;
+  const [owner,fee,paused,usdt,inrp,pool]=await Promise.all([
+   readAdapter.owner(),readAdapter.adapterFeeBps(),readAdapter.paused(),
+   readAdapter.USDT(),readAdapter.INRP(),readAdapter.POOL()
+  ]);
+  if(ethers.getAddress(usdt)!==ethers.getAddress(TOKENS.USDT) ||
+     ethers.getAddress(inrp)!==ethers.getAddress(TOKENS.INRP) ||
+     ethers.getAddress(pool)!==ethers.getAddress(POOL)){
+   throw Error("Contract constants do not match the supplied V3 source.");
   }
-  provider = null;
-  signer = null;
-  account = null;
-  adapter = null;
-  readAdapter = null;
-  ownerAddress = null;
-  partnerInfo = null;
-  $("walletBadge").textContent = "Wallet not connected";
-  $("overviewAddress").textContent = "Not connected";
-  $("overviewRole").textContent = "�";
-  $("connectBtn").classList.remove("hidden");
-  $("wcBtn").classList.remove("hidden");
-  $("disconnectBtn").classList.add("hidden");
-  $("switchBtn").classList.add("hidden");
-  setStatus("Wallet disconnected.");
-}
-
-/* ---------------- TRANSACTION HANDLING ---------------- */
-
-async function submitTransactions(txs) {
-  requireAccount();
-  requireContract();
-
-  if (safeMode) {
-    const result = await safeSdk.txs.send({ txs });
-    setStatus(
-      "Safe transaction submitted. Safe transaction hash: " +
-      (result.safeTxHash || "returned by Safe") +
-      ". This is a proposal/submission, not confirmation of execution.",
-      "warning"
-    );
-    return { safe: true, result };
-  }
-
-  requireNetwork();
-  if (!signer) throw new Error("Wallet signer unavailable.");
-
-  const responses = [];
-  for (const tx of txs) {
-    const response = await signer.sendTransaction({
-      to: tx.to,
-      value: tx.value || "0x0",
-      data: tx.data
-    });
-    setStatus("Transaction submitted: " + response.hash, "warning");
-    const receipt = await response.wait();
-    if (!receipt || receipt.status !== 1) throw new Error("Transaction failed on-chain.");
-    responses.push(receipt);
-    setStatus("Transaction confirmed: " + response.hash, "success");
-  }
-  return { safe: false, responses };
-}
-
-async function writeContract(method, args = []) {
-  requireAccount();
-  requireContract();
-  if (!safeMode && !isOwner && method !== "registerPartner") {
-    throw new Error("This connected account is not the contract owner.");
-  }
-
-  const data = readAdapter.interface.encodeFunctionData(method, args);
-  return submitTransactions([{ to: await readAdapter.getAddress(), data, value: "0x0" }]);
-}
-
-async function approveAndTrade(tokenName, requiredAmount, tradeMethod, tradeArgs) {
-  requireAccount();
-  requireContract();
-  if (safeMode) {
-    const token = new ethers.Contract(EXPECTED[tokenName], ERC20_ABI, provider);
-    const approveData = token.interface.encodeFunctionData("approve", [
-      await readAdapter.getAddress(), requiredAmount
-    ]);
-    const tradeData = readAdapter.interface.encodeFunctionData(tradeMethod, tradeArgs);
-    return submitTransactions([
-      { to: EXPECTED[tokenName], data: approveData, value: "0x0" },
-      { to: await readAdapter.getAddress(), data: tradeData, value: "0x0" }
-    ]);
-  }
-
-  const token = new ethers.Contract(EXPECTED[tokenName], ERC20_ABI, signer);
-  const allowance = await token.allowance(account, await readAdapter.getAddress());
-  if (allowance < requiredAmount) {
-    setStatus("Approving " + tokenName + "...", "warning");
-    const approval = await token.approve(await readAdapter.getAddress(), requiredAmount);
-    const receipt = await approval.wait();
-    if (!receipt || receipt.status !== 1) throw new Error("Token approval failed.");
-  }
-
-  const tx = await adapter[tradeMethod](...tradeArgs);
-  setStatus("Trade submitted: " + tx.hash, "warning");
-  const receipt = await tx.wait();
-  if (!receipt || receipt.status !== 1) throw new Error("Trade transaction failed.");
-  setStatus("Trade confirmed: " + tx.hash, "success");
-  return receipt;
-}
-
-/* ---------------- REFRESH ---------------- */
-
-async function initializeContract() {
-  try {
-    if (!provider || !account) return;
-    setupContracts();
-
-    const network = await provider.getNetwork();
-    if (!safeMode && Number(network.chainId) !== CHAIN_ID) {
-      $("networkBadge").textContent = "Wrong network";
-      setStatus("Please switch your wallet to BNB Smart Chain.", "warning");
-      return;
-    }
-
-    await verifyDependencies();
-
-    const [owner, paused, fee, share, automatic] = await Promise.all([
-      readAdapter.owner(),
-      readAdapter.paused(),
-      readAdapter.adapterFeeBps(),
-      readAdapter.defaultPartnerShareBps(),
-      readAdapter.automaticFeeTransfer()
-    ]);
-
-    ownerAddress = owner;
-    isOwner = owner.toLowerCase() === account.toLowerCase();
-
-    $("metricFee").textContent = fee.toString() + " bps";
-    $("metricShare").textContent = share.toString() + " bps";
-    $("metricPaused").textContent = paused ? "Paused" : "Active";
-    $("metricPaused").style.color = paused ? "var(--danger)" : "var(--accent)";
-    $("overviewRole").textContent = isOwner ? "Admin / Owner" : "Trader / Partner";
-    $("automaticFeeTransfer").checked = automatic;
-
-    document.querySelectorAll(".admin-write").forEach(btn => {
-      btn.disabled = !isOwner;
-    });
-
-    await refreshPartner();
-    setStatus("Contract connected and dependencies verified.", "success");
-  } catch (error) {
-    setStatus(error.message || String(error), "error");
-  }
-}
-
-async function refreshPartner() {
-  if (!account || !readAdapter) return;
-  try {
-    partnerInfo = await readAdapter.getPartnerInfo(account);
-    const registered = partnerInfo.registered;
-    $("partnerStatus").textContent = registered
-      ? (partnerInfo.active ? "Registered � Active" : "Registered � Inactive")
-      : "Not registered";
-    $("partnerShare").textContent = registered
-      ? partnerInfo.commissionShareBps.toString() + " bps"
-      : "�";
-    $("referralCode").textContent = registered ? partnerInfo.referralCode : "�";
-    $("payoutAddress").value = registered ? partnerInfo.payoutAddress : "";
-    $("automaticPayout").checked = registered ? partnerInfo.automaticPayout : false;
-
-    const fees = await readAdapter.getPartnerAccruedFees(account);
-    $("claimUsdt").textContent = formatAmount(fees.usdtBalance, 18) + " USDT";
-    $("claimInrp").textContent = formatAmount(fees.inrpBalance, 18) + " INRP";
-
-    $("buyPartner").value = account;
-    $("sellPartner").value = account;
-  } catch (error) {
-    console.warn("Partner refresh:", error);
-  }
-}
-
-/* ---------------- QUOTES ---------------- */
-
-async function getBuyQuote() {
-  requireContract();
-  const amount = parseAmount($("buyAmount").value, 18);
-  const q = await readAdapter.quoteBuyWithAdapterFee(amount);
-  quoteBuyData = q;
-
-  $("buyMinOut").value = q.inrpOut.toString();
-  $("buyMaxFee").value = q.adapterFee.toString();
-
-  $("buyQuote").innerHTML = `
-    <div class="quote-line"><span>LP fee</span><strong>${formatAmount(q.lpFee,18)} USDT</strong></div>
-    <div class="quote-line"><span>Adapter fee</span><strong>${formatAmount(q.adapterFee,18)} USDT</strong></div>
-    <div class="quote-line"><span>Estimated INRP output</span><strong>${formatAmount(q.inrpOut,18)} INRP</strong></div>
-    <div class="quote-line"><span>Total USDT required</span><strong>${formatAmount(q.totalUsdtRequired,18)} USDT</strong></div>
-  `;
-  $("buyBtn").disabled = false;
-}
-
-async function getSellQuote() {
-  requireContract();
-  const amount = parseAmount($("sellAmount").value, 18);
-  const q = await readAdapter.quoteSellWithAdapterFee(amount);
-  quoteSellData = q;
-
-  $("sellMinOut").value = q.usdtOut.toString();
-  $("sellMaxFee").value = q.adapterFee.toString();
-
-  $("sellQuote").innerHTML = `
-    <div class="quote-line"><span>Gross USDT</span><strong>${formatAmount(q.usdtGross,18)} USDT</strong></div>
-    <div class="quote-line"><span>LP fee</span><strong>${formatAmount(q.lpFee,18)} USDT</strong></div>
-    <div class="quote-line"><span>Adapter fee</span><strong>${formatAmount(q.adapterFee,18)} INRP</strong></div>
-    <div class="quote-line"><span>Estimated USDT output</span><strong>${formatAmount(q.usdtOut,18)} USDT</strong></div>
-    <div class="quote-line"><span>Total INRP required</span><strong>${formatAmount(q.totalInrpRequired,18)} INRP</strong></div>
-  `;
-  $("sellBtn").disabled = false;
-}
-
-/* ---------------- TRADES ---------------- */
-
-async function buyTrade() {
-  requireAccount();
-  if (!quoteBuyData) throw new Error("Get a fresh buy quote first.");
-  const partner = ethers.getAddress($("buyPartner").value.trim());
-  const amount = parseAmount($("buyAmount").value, 18);
-  const minOut = BigInt($("buyMinOut").value);
-  const maxFee = BigInt($("buyMaxFee").value);
-
-  if (minOut <= 0n || maxFee < quoteBuyData.adapterFee) {
-    throw new Error("Invalid minimum output or maximum fee. Refresh the quote.");
-  }
-  if (partner.toLowerCase() !== account.toLowerCase()) {
-    const info = await readAdapter.getPartnerInfo(partner);
-    if (!info.registered || !info.active) throw new Error("Selected partner is not registered and active.");
-  }
-
-  await approveAndTrade(
-    "USDT", quoteBuyData.totalUsdtRequired,
-    "buyINRPForPartner",
-    [amount, minOut, maxFee, partner]
-  );
-  quoteBuyData = null;
+  contractMsg("Loaded � Owner "+short(owner)+" � Fee "+fee+" bps � "+(paused?"Paused":"Active"),"ok");
   await refreshPartner();
+  await refreshAdmin();
+ }catch(e){
+  contractMsg(e.message||String(e),"bad");
+  throw e;
+ }
 }
 
-async function sellTrade() {
-  requireAccount();
-  if (!quoteSellData) throw new Error("Get a fresh sell quote first.");
-  const partner = ethers.getAddress($("sellPartner").value.trim());
-  const amount = parseAmount($("sellAmount").value, 18);
-  const minOut = BigInt($("sellMinOut").value);
-  const maxFee = BigInt($("sellMaxFee").value);
+async function sendContract(method,args=[],opts={}){
+ requireContract();
+ if(!account) throw Error("Connect a wallet first.");
+ const data=readAdapter.interface.encodeFunctionData(method,args);
+ if(isSafe()){
+  const tx={to:adapterAddress,value:"0",data};
+  const result=await safeSdk.txs.send({txs:[tx]});
+  msg("Safe transaction submitted. It may still require owner confirmations and execution. Safe transaction hash: "+(result.safeTxHash||"not returned"),"warn");
+  return {safe:true,result};
+ }
+ if(!signer) throw Error("Wallet signer unavailable.");
+ const tx=await adapter[method](...args,opts);
+ msg("Transaction submitted: "+tx.hash);
+ const receipt=await tx.wait();
+ if(receipt.status!==1) throw Error("Transaction reverted.");
+ msg("Transaction confirmed: "+tx.hash,"ok");
+ return {safe:false,receipt,tx};
+}
 
-  if (minOut <= 0n || maxFee < quoteSellData.adapterFee) {
-    throw new Error("Invalid minimum output or maximum fee. Refresh the quote.");
+async function sendTokenAndAdapter(tokenSymbol,tokenAmount,method,args){
+ requireContract();
+ const token=tokenContract(tokenSymbol,provider);
+ if(isSafe()){
+  const current=await token.allowance(account,adapterAddress);
+  const txs=[];
+  if(current<tokenAmount){
+   const iface=new ethers.Interface(ERC20_ABI);
+   txs.push({to:TOKENS[tokenSymbol],value:"0",
+    data:iface.encodeFunctionData("approve",[adapterAddress,tokenAmount])});
   }
-  if (partner.toLowerCase() !== account.toLowerCase()) {
-    const info = await readAdapter.getPartnerInfo(partner);
-    if (!info.registered || !info.active) throw new Error("Selected partner is not registered and active.");
+  txs.push({to:adapterAddress,value:"0",
+   data:readAdapter.interface.encodeFunctionData(method,args)});
+  const result=await safeSdk.txs.send({txs});
+  msg("Safe transaction submitted (approval and trade). Check Safe confirmations and execution status. Hash: "+(result.safeTxHash||"not returned"),"warn");
+  return;
+ }
+ const connectedToken=token.connect(signer);
+ const allowance=await connectedToken.allowance(account,adapterAddress);
+ if(allowance<tokenAmount){
+  const approval=await connectedToken.approve(adapterAddress,tokenAmount);
+  msg("Approval submitted: "+approval.hash);
+  await approval.wait();
+ }
+ await sendContract(method,args);
+}
+
+async function refreshPartner(){
+ try{
+  requireContract();
+  const who=$("partnerLookup").value.trim()||account;
+  if(!addrOK(who)){ $("partnerInfo").textContent="Enter a valid partner address.";return; }
+  const [info,balances,stats,blacklisted]=await Promise.all([
+   readAdapter.getPartnerInfo(who),
+   readAdapter.getPartnerAccruedFees(who),
+   readAdapter.getPartnerStats(who),
+   readAdapter.partnerBlacklisted(who)
+  ]);
+  const [payout,share,registered,active,automatic,code,registeredAt]=info;
+  $("partnerInfo").textContent=
+   `Address: ${who}\nRegistered: ${registered}\nActive: ${active}\nBlacklisted: ${blacklisted}\nPayout: ${payout}\nCommission share: ${share} bps\nAutomatic payout: ${automatic}\nReferral code: ${code}\nRegistered: ${registeredAt>0n?new Date(Number(registeredAt)*1000).toLocaleString():"�"}`;
+  $("commissionBalances").textContent=
+   `USDT accrued: ${fmt(parse(balances[0],18),6)}\nINRP accrued: ${fmt(parse(balances[1],6),6)}\nCommission earned USDT: ${fmt(parse(stats[6],18),6)}\nCommission earned INRP: ${fmt(parse(stats[7],6),6)}`;
+  $("partnerRegistrationStatus").textContent=registered?
+   "This address is already registered.": "This address is not registered.";
+ }catch(e){$("partnerInfo").textContent=e.message||String(e);}
+}
+
+async function refreshAdmin(){
+ try{
+  requireContract();
+  const [owner,fee,share,automatic,paused]=await Promise.all([
+   readAdapter.owner(),readAdapter.adapterFeeBps(),
+   readAdapter.defaultPartnerShareBps(),readAdapter.automaticFeeTransfer(),
+   readAdapter.paused()
+  ]);
+  $("adminStatus").textContent=
+   `Owner: ${owner}\nConnected: ${account||"Disconnected"}\nOwner wallet: ${!!account && owner.toLowerCase()===account.toLowerCase()}\nFee: ${fee} bps\nDefault partner share: ${share} bps\nAutomatic owner transfer: ${automatic}\nPaused: ${paused}`;
+  $("adminFee").value=fee.toString();
+  $("adminShare").value=share.toString();
+  $("ownerAuto").value=String(automatic);
+ }catch(e){$("adminStatus").textContent=e.message||String(e);}
+}
+
+async function quoteBuy(){
+ try{
+  requireContract();
+  const amount=units($("buyAmount").value,18);
+  if(amount<=0n) throw Error("Enter a positive USDT amount.");
+  const q=await readAdapter.quoteBuyWithAdapterFee(amount);
+  $("buyQuote").textContent=
+   `Pool fee: ${fmt(parse(q[0],18),6)} USDT\nINRP output: ${fmt(parse(q[1],6),6)} INRP\nAdapter fee: ${fmt(parse(q[2],18),6)} USDT\nTotal USDT required: ${fmt(parse(q[3],18),6)} USDT`;
+  return q;
+ }catch(e){$("buyQuote").textContent=e.message||String(e);}
+}
+
+async function quoteSell(){
+ try{
+  requireContract();
+  const amount=units($("sellAmount").value,6);
+  if(amount<=0n) throw Error("Enter a positive INRP amount.");
+  const q=await readAdapter.quoteSellWithAdapterFee(amount);
+  $("sellQuote").textContent=
+   `Gross USDT: ${fmt(parse(q[0],18),6)}\nPool fee: ${fmt(parse(q[1],18),6)} USDT\nUSDT output: ${fmt(parse(q[2],18),6)} USDT\nAdapter fee: ${fmt(parse(q[3],6),6)} INRP\nTotal INRP required: ${fmt(parse(q[4],6),6)} INRP`;
+  return q;
+ }catch(e){$("sellQuote").textContent=e.message||String(e);}
+}
+
+async function buy(){
+ try{
+  requireAccount();requireContract();
+  const amount=units($("buyAmount").value,18);
+  const minOut=units($("buyMinOut").value||"0",6);
+  const partner=$("buyPartner").value.trim();
+  if(!addrOK(partner)) throw Error("Enter a valid registered partner address.");
+  const fee=await readAdapter.calculateAdapterFee(amount);
+  await sendTokenAndAdapter("USDT",amount+fee,
+   "buyINRPForPartner",[amount,minOut,fee,ethers.getAddress(partner)]);
+ }catch(e){msg(e.shortMessage||e.message||String(e),"bad");}
+}
+
+async function sell(){
+ try{
+  requireAccount();requireContract();
+  const amount=units($("sellAmount").value,6);
+  const minOut=units($("sellMinOut").value||"0",18);
+  const partner=$("sellPartner").value.trim();
+  if(!addrOK(partner)) throw Error("Enter a valid registered partner address.");
+  const fee=await readAdapter.calculateAdapterFee(amount);
+  await sendTokenAndAdapter("INRP",amount+fee,
+   "sellINRPForPartner",[amount,minOut,fee,ethers.getAddress(partner)]);
+ }catch(e){msg(e.shortMessage||e.message||String(e),"bad");}
+}
+
+async function signTrade(){
+ try{
+  requireAccount();requireContract();
+  const side=$("signedSide").value;
+  const isBuy=side==="buy";
+  const amount=units($("signedAmount").value,isBuy?18:6);
+  const minOut=units($("signedMinOut").value||"0",isBuy?6:18);
+  const maxFee=units($("signedMaxFee").value||"0",isBuy?18:6);
+  const minutes=Number($("signedDeadline").value||15);
+  if(amount<=0n || !Number.isFinite(minutes)||minutes<=0) throw Error("Enter a valid amount and deadline.");
+  const partner=$("signedPartner").value.trim();
+  if(!addrOK(partner)) throw Error("Enter the submitting partner address.");
+  const nonce=await readAdapter.getNonce(account);
+  const deadline=BigInt(Math.floor(Date.now()/1000)+minutes*60);
+  const domain={...EIP712_DOMAIN,verifyingContract:adapterAddress};
+  const value={user:account,isBuy,amount,minOut,maxAdapterFee:maxFee,nonce,deadline};
+  let signature;
+  if(isSafe()){
+   const typedData={
+    domain,
+    types:{EIP712Domain:[
+     {name:"name",type:"string"},
+     {name:"version",type:"string"},
+     {name:"chainId",type:"uint256"},
+     {name:"verifyingContract",type:"address"}
+    ],...TRADE_TYPES},
+    primaryType:"Trade",
+    message:{
+     user:account,isBuy,amount:amount.toString(),minOut:minOut.toString(),
+     maxAdapterFee:maxFee.toString(),nonce:nonce.toString(),deadline:deadline.toString()
+    }
+   };
+   signature=await provider.send("eth_signTypedData_v4",[account,JSON.stringify(typedData)]);
+  }else{
+   signature=await signer.signTypedData(domain,TRADE_TYPES,value);
   }
-
-  await approveAndTrade(
-    "INRP", quoteSellData.totalInrpRequired,
-    "sellINRPForPartner",
-    [amount, minOut, maxFee, partner]
-  );
-  quoteSellData = null;
-  await refreshPartner();
+  lastAuthorization={side,partner:ethers.getAddress(partner),user:account,
+   amount,minOut,maxFee,nonce,deadline,signature};
+  $("signedStatus").textContent=
+   `Authorization signed.\nUser: ${account}\nPartner: ${partner}\nSide: ${side}\nNonce: ${nonce}\nDeadline: ${deadline}\nSignature: ${signature}`;
+  msg("Trade authorization signed. The partner can now submit it.","ok");
+ }catch(e){$("signedStatus").textContent=e.message||String(e);msg(e.shortMessage||e.message||String(e),"bad");}
 }
 
-/* ---------------- PARTNER ACTIONS ---------------- */
-
-async function registerPartner() {
-  const info = await readAdapter.getPartnerInfo(account);
-  if (info.registered) throw new Error("This address is already registered.");
-  await writeContract("registerPartner");
-  if (!safeMode) await refreshPartner();
+async function submitSigned(){
+ try{
+  requireAccount();requireContract();
+  if(!lastAuthorization) throw Error("Sign an authorization first.");
+  const a=lastAuthorization;
+  if(account.toLowerCase()!==a.partner.toLowerCase())
+   throw Error("Connect the registered partner wallet that is named in the authorization.");
+  const method=a.side==="buy"?"buyINRPFor":"sellINRPFor";
+  await sendContract(method,[a.user,a.amount,a.minOut,a.maxFee,a.nonce,a.deadline,a.signature]);
+  lastAuthorization=null;
+  $("signedStatus").textContent="Submission sent. Check the transaction or Safe execution status.";
+ }catch(e){msg(e.shortMessage||e.message||String(e),"bad");}
 }
 
-async function setPayoutAddress() {
-  const address = ethers.getAddress($("payoutAddress").value.trim());
-  await writeContract("setPartnerPayoutAddress", [address]);
-  if (!safeMode) await refreshPartner();
+function bind(id,fn){
+ $(id).addEventListener("click",async()=>{try{await fn();}catch(e){msg(e.shortMessage||e.message||String(e),"bad");}});
+}
+function bpsInput(id,max){
+ const n=BigInt($(id).value||"0");
+ if(n<0n||n>BigInt(max)) throw Error(`Value must be between 0 and ${max} bps.`);
+ return n;
+}
+function amountOrMax(value,decimals){
+ return value.trim()===""?MAX_UINT:units(value,decimals);
 }
 
-async function setPayoutMode() {
-  await writeContract("setPartnerPayoutMode", [$("automaticPayout").checked]);
-  if (!safeMode) await refreshPartner();
-}
+bind("connectBtn",connectInjected);
+bind("wcBtn",connectWalletConnect);
+bind("disconnectBtn",disconnect);
+bind("switchBtn",switchNetwork);
+bind("saveAdapter",async()=>{
+ const a=getAdapterAddress();
+ adapterAddress=a;localStorage.setItem("inrp.adapter.v3",a);
+ contractMsg("Adapter address saved.","ok");
+});
+bind("loadAdapter",loadContract);
+bind("quoteBuyBtn",quoteBuy);
+bind("quoteSellBtn",quoteSell);
+bind("buyBtn",buy);
+bind("sellBtn",sell);
+bind("signTradeBtn",signTrade);
+bind("submitSignedBtn",submitSigned);
 
-async function claimFees(tokenName, inputId) {
-  const amount = parseAmount($(inputId).value, 18);
-  const tokenAddress = EXPECTED[tokenName];
-  await writeContract("claimPartnerFees", [tokenAddress, amount]);
-  if (!safeMode) await refreshPartner();
-}
-
-/* ---------------- ADMIN ACTIONS ---------------- */
-
-async function executeAdmin(method) {
-  if (!isOwner) throw new Error("Only the current contract owner can perform this action.");
-
-  switch (method) {
-    case "setAdapterFeeBps": {
-      const value = BigInt($("newFee").value);
-      if (value > 300n) throw new Error("Maximum adapter fee is 300 bps.");
-      return writeContract(method, [value]);
-    }
-    case "setDefaultPartnerShareBps": {
-      const value = BigInt($("newShare").value);
-      if (value > 10000n) throw new Error("Share cannot exceed 10000 bps.");
-      return writeContract(method, [value]);
-    }
-    case "setAutomaticFeeTransfer":
-      return writeContract(method, [$("automaticFeeTransfer").checked]);
-
-    case "pause":
-    case "unpause":
-      return writeContract(method);
-
-    case "setPartnerCommissionShare": {
-      const partner = ethers.getAddress($("overridePartner").value.trim());
-      const share = BigInt($("overrideShare").value);
-      if (share > 10000n) throw new Error("Share cannot exceed 10000 bps.");
-      return writeContract(method, [partner, share]);
-    }
-
-    case "blacklistPartner":
-    case "unblacklistPartner":
-      return writeContract(method, [
-        ethers.getAddress($("blacklistPartner").value.trim())
-      ]);
-
-    case "withdrawAdapterFees": {
-      const token = EXPECTED[$("withdrawToken").value];
-      const amount = parseAmount($("withdrawAmount").value, 18);
-      return writeContract(method, [token, amount]);
-    }
-
-    case "transferOwnership":
-      return writeContract(method, [
-        ethers.getAddress($("newOwner").value.trim())
-      ]);
-
-    case "rescueToken": {
-      const token = ethers.getAddress($("rescueToken").value.trim());
-      const recipient = ethers.getAddress($("rescueRecipient").value.trim());
-      const amount = parseAmount($("rescueAmount").value, 18);
-      return writeContract(method, [token, amount, recipient]);
-    }
-
-    case "rescueBNB": {
-      const recipient = ethers.getAddress($("rescueBnbRecipient").value.trim());
-      const amount = ethers.parseEther($("rescueBnbAmount").value);
-      return writeContract(method, [amount, recipient]);
-    }
-  }
-}
-
-/* ---------------- EVENT BINDINGS ---------------- */
-
-function action(id, fn) {
-  $(id).addEventListener("click", async () => {
-    try {
-      setStatus("Processing...", "warning");
-      await fn();
-      if (!safeMode) setStatus("Action completed.", "success");
-    } catch (error) {
-      console.error(error);
-      setStatus(error.shortMessage || error.reason || error.message || String(error), "error");
-    }
-  });
-}
-
-action("connectBtn", connectBrowserWallet);
-action("wcBtn", connectWalletConnect);
-action("disconnectBtn", disconnectWallet);
-action("switchBtn", switchToBnb);
-action("refreshBtn", initializeContract);
-action("saveConfigBtn", async () => {
-  const address = configAddress();
-  localStorage.setItem("inrpAdapterAddress", address);
-  localStorage.setItem("inrpWalletConnectProjectId", $("projectId").value.trim());
-  if (provider && account) await initializeContract();
-  else setStatus("Configuration saved. Connect your wallet to continue.", "success");
+bind("registerPartnerBtn",async()=>{await sendContract("registerPartner");await refreshPartner();});
+bind("refreshPartnerBtn",refreshPartner);
+bind("setPayoutBtn",async()=>{
+ const a=$("payoutAddress").value.trim();
+ if(!addrOK(a)) throw Error("Enter a valid payout address.");
+ await sendContract("setPartnerPayoutAddress",[a]);await refreshPartner();
+});
+bind("setPayoutModeBtn",async()=>{
+ await sendContract("setPartnerPayoutMode",[$("payoutMode").value==="true"]);
+ await refreshPartner();
+});
+bind("claimBtn",async()=>{
+ const token=$("claimToken").value;
+ const amount=amountOrMax($("claimAmount").value,getTokenDecimals(token));
+ await sendContract("claimPartnerFees",[TOKENS[token],amount]);
+ await refreshPartner();
 });
 
-action("buyQuoteBtn", getBuyQuote);
-action("sellQuoteBtn", getSellQuote);
-action("buyBtn", buyTrade);
-action("sellBtn", sellTrade);
-action("registerBtn", registerPartner);
-action("savePayoutBtn", setPayoutAddress);
-action("savePayoutModeBtn", setPayoutMode);
-action("claimUsdtBtn", () => claimFees("USDT", "claimUsdtAmount"));
-action("claimInrpBtn", () => claimFees("INRP", "claimInrpAmount"));
-
-document.querySelectorAll(".admin-write").forEach(btn => {
-  btn.addEventListener("click", async () => {
-    try {
-      setStatus("Preparing administrative transaction...", "warning");
-      await executeAdmin(btn.dataset.method);
-      if (!safeMode) await initializeContract();
-    } catch (error) {
-      setStatus(error.shortMessage || error.reason || error.message || String(error), "error");
-    }
-  });
+bind("setFeeBtn",async()=>{await sendContract("setAdapterFeeBps",[bpsInput("adminFee",300)]);await refreshAdmin();});
+bind("setShareBtn",async()=>{await sendContract("setDefaultPartnerShareBps",[bpsInput("adminShare",10000)]);await refreshAdmin();});
+bind("setOwnerAutoBtn",async()=>{await sendContract("setAutomaticFeeTransfer",[$("ownerAuto").value==="true"]);await refreshAdmin();});
+bind("pauseBtn",async()=>{await sendContract("pause");await refreshAdmin();});
+bind("unpauseBtn",async()=>{await sendContract("unpause");await refreshAdmin();});
+bind("setPartnerShareBtn",async()=>{
+ const p=$("adminPartner").value.trim();
+ if(!addrOK(p)) throw Error("Enter a valid partner address.");
+ await sendContract("setPartnerCommissionShare",[p,bpsInput("adminPartnerShare",10000)]);
+});
+bind("blacklistBtn",async()=>{
+ const p=$("adminPartner").value.trim();if(!addrOK(p))throw Error("Enter a valid partner address.");
+ await sendContract("blacklistPartner",[p]);
+});
+bind("unblacklistBtn",async()=>{
+ const p=$("adminPartner").value.trim();if(!addrOK(p))throw Error("Enter a valid partner address.");
+ await sendContract("unblacklistPartner",[p]);
+});
+bind("withdrawBtn",async()=>{
+ const token=$("withdrawToken").value;
+ const amount=amountOrMax($("withdrawAmount").value,getTokenDecimals(token));
+ await sendContract("withdrawAdapterFees",[TOKENS[token],amount]);
+ await refreshAdmin();
+});
+bind("rescueBtn",async()=>{
+ const token=$("rescueToken").value.trim();
+ const recipient=$("rescueRecipient").value.trim();
+ if(!addrOK(token)||!addrOK(recipient)) throw Error("Enter valid token and recipient addresses.");
+ const amount=amountOrMax($("rescueAmount").value,18);
+ await sendContract("rescueToken",[token,amount,recipient]);
+});
+bind("transferOwnerBtn",async()=>{
+ const next=$("nextOwner").value.trim();
+ if(!addrOK(next))throw Error("Enter a valid new owner address.");
+ if(!confirm("Transfer adapter ownership to "+next+"? This is an irreversible on-chain administration action."))return;
+ await sendContract("transferOwnership",[next]);
+ await refreshAdmin();
 });
 
-if (window.ethereum) {
-  window.ethereum.on?.("accountsChanged", async accounts => {
-    if (safeMode) return;
-    if (!accounts.length) return disconnectWallet();
-    account = ethers.getAddress(accounts[0]);
-    signer = await provider.getSigner();
-    await updateWalletUI();
-    await initializeContract();
-  });
+document.querySelectorAll(".tab").forEach(btn=>{
+ btn.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===btn));
+  document.querySelectorAll(".view").forEach(x=>x.classList.add("hidden"));
+  $("view-"+btn.dataset.view).classList.remove("hidden");
+ });
+});
 
-  window.ethereum.on?.("chainChanged", () => window.location.reload());
+$("adapterAddress").value=adapterAddress;
+$("partnerLookup").value="";
+$("buyPartner").value="";
+$("sellPartner").value="";
+$("signedPartner").value="";
+
+if(window.ethereum){
+ window.ethereum.on?.("accountsChanged",async accounts=>{
+  if(safeMode)return;
+  if(!accounts.length){await disconnect();return;}
+  try{await setupWallet(window.ethereum);}catch(e){msg(e.message||String(e),"bad");}
+ });
+ window.ethereum.on?.("chainChanged",()=>location.reload());
 }
 
-/* ---------------- STARTUP ---------------- */
-
-$("adapterAddress").value =
-  localStorage.getItem("inrpAdapterAddress") || ADAPTER_DEFAULT;
-$("projectId").value =
-  localStorage.getItem("inrpWalletConnectProjectId") ||
-  "ccef25dcfdb87869f9617936952c987d";
-
-try {
-  const detected = await detectSafe();
-  if (!detected) {
-    setStatus("Ready. Connect a wallet or use WalletConnect.");
+(async()=>{
+ try{
+  updateWalletUI();
+  const detected=await initSafe();
+  if(!detected){
+   $("accountStatus").textContent="Wallet disconnected";
+   if(adapterAddress) contractMsg("Adapter address found in browser storage. Connect and load it.");
   }
-} catch (error) {
-  setStatus(error.message || String(error), "error");
-}
+ }catch(e){msg(e.message||String(e),"bad");}
+})();
 </script>
 </body>
 </html>
