@@ -1,0 +1,1 @@
+# Custom-Safe-App-USDTINRP-Adapter-SubPartner-dApp
