@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -67,7 +68,7 @@ a{color:#9cb8ff}
   <div class="topline">
     <div>
       <h1>INRP Adapter V3</h1>
-      <div class="status">Fixed-rate INRP / USDT — BNB Smart Chain</div>
+      <div class="status">Fixed-rate INRP / USDT � BNB Smart Chain</div>
     </div>
     <span class="pill" id="connectionStatus">Not connected</span>
   </div>
@@ -181,12 +182,12 @@ a{color:#9cb8ff}
         <button id="refreshPartner" class="secondary">Refresh partner information</button>
       </div>
       <div class="grid" style="margin-top:15px">
-        <div><label>Referral code</label><div class="value" id="partnerCode">—</div></div>
-        <div><label>Payout address</label><div class="value" id="partnerPayout">—</div></div>
-        <div><label>Commission share</label><div class="value" id="partnerShare">—</div></div>
-        <div><label>Partner status</label><div class="value" id="partnerStatus">—</div></div>
-        <div><label>Accrued USDT fees</label><div class="value" id="partnerUSDTFees">—</div></div>
-        <div><label>Accrued INRP fees</label><div class="value" id="partnerINRPFees">—</div></div>
+        <div><label>Referral code</label><div class="value" id="partnerCode">�</div></div>
+        <div><label>Payout address</label><div class="value" id="partnerPayout">�</div></div>
+        <div><label>Commission share</label><div class="value" id="partnerShare">�</div></div>
+        <div><label>Partner status</label><div class="value" id="partnerStatus">�</div></div>
+        <div><label>Accrued USDT fees</label><div class="value" id="partnerUSDTFees">�</div></div>
+        <div><label>Accrued INRP fees</label><div class="value" id="partnerINRPFees">�</div></div>
       </div>
       <hr>
       <h3>Payout settings</h3>
@@ -557,7 +558,7 @@ async function refreshWalletInfo() {
     : "Unknown";
 
   $("walletMode").textContent=safeMode
-    ? "Safe App detected — automatically connected"
+    ? "Safe App detected � automatically connected"
     : walletKind==="walletconnect"
       ? "WalletConnect session"
       : walletKind==="injected"
@@ -794,34 +795,39 @@ async function readAdapter(method,args=[]) {
  * - maxAdapterFee is USDT with 18 decimals.
  * - minOut and maxAdapterFee may be zero.
  */
-function selectedTrade() {
-  const side=$("tradeSide").value;
-  const amountText=$("tradeAmount").value.trim();
+function selectedQuote() {
+  const side = $("tradeSide").value;
 
-  const amount=parseUnits(
-    amountText,
-    side==="buy" ? USDT_DECIMALS : INRP_DECIMALS,
-    false
+  const amount = parseUnits(
+    $("tradeAmount").value,
+    side === "buy" ? USDT_DECIMALS : INRP_DECIMALS
   );
 
-  const minOut=parseUnits(
-    $("minOut").value.trim() || "0",
-    side==="buy" ? INRP_DECIMALS : USDT_DECIMALS,
+  return { side, amount };
+}
+
+function selectedTrade() {
+  const { side, amount } = selectedQuote();
+
+  const minOut = parseUnits(
+    $("minOut").value || "0",
+    side === "buy" ? INRP_DECIMALS : USDT_DECIMALS,
     true
   );
 
-  const maxFee=parseUnits(
-    $("maxAdapterFee").value.trim() || "0",
+  const maxFee = parseUnits(
+    $("maxAdapterFee").value || "0",
     USDT_DECIMALS,
     true
   );
 
-  const code=$("referralCode").value.trim();
+  const code = $("referralCode").value.trim();
 
-  if(!/^0x[0-9a-fA-F]{64}$/.test(code))
-    throw new Error("Enter a valid bytes32 referral code.");
+  if (!/^0x[0-9a-fA-F]{64}$/.test(code)) {
+    throw new Error("Enter a valid bytes32 referral code before trading.");
+  }
 
-  return {side,amount,minOut,maxFee,code};
+  return { side, amount, minOut, maxFee, code };
 }
 
 async function resolvePartner(code) {
@@ -845,11 +851,11 @@ async function resolvePartner(code) {
 async function getTradeQuote() {
   if(!adapter) throw new Error("Load the adapter address first.");
 
-  $("quoteResult").textContent="Requesting quote…";
+  $("quoteResult").textContent="Requesting quote�";
   lastQuote=null;
 
   try {
-    const trade=selectedTrade();
+    const trade=selectedQuote();
     let quote;
 
     if(trade.side==="buy") {
@@ -1173,7 +1179,7 @@ async function refreshPartnerInfo() {
   $("partnerPayout").textContent=info.payoutAddress;
   $("partnerShare").textContent=(Number(info.commissionShareBps)/100)+"%";
   $("partnerStatus").textContent=
-    `Registered: ${info.registered} — Active: ${info.active} — Automatic payout: ${info.automaticPayout}`;
+    `Registered: ${info.registered} � Active: ${info.active} � Automatic payout: ${info.automaticPayout}`;
 
   $("partnerUSDTFees").textContent=formatUnits(fees[0],USDT_DECIMALS)+" USDT";
   $("partnerINRPFees").textContent=formatUnits(fees[1],INRP_DECIMALS)+" INRP";
@@ -1448,4 +1454,5 @@ init().catch(e=>{
 </script>
 </body>
 </html>
+
 
