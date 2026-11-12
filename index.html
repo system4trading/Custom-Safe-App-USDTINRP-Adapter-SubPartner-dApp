@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -56,8 +57,12 @@ label{display:block;color:var(--muted);font-size:12px;margin:12px 0 6px}
   border-radius:9px;max-height:260px;overflow:auto}
 hr{border:0;border-top:1px solid var(--line);margin:18px 0}
 a{color:#9cb8ff}
+.detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.detail-item{min-width:0;padding:10px;background:#10182a;border:1px solid var(--line);border-radius:9px}
+.detail-item .small{margin-bottom:5px}
+.referral-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 @media(max-width:650px){
-  .grid{grid-template-columns:1fr}.full{grid-column:auto}
+  .grid,.detail-grid{grid-template-columns:1fr}.full{grid-column:auto}
   header{padding:18px}.topline{align-items:flex-start}
 }
 </style>
@@ -106,6 +111,33 @@ a{color:#9cb8ff}
     <div class="small" id="connectHelp" style="margin-top:10px">
       BNB Smart Chain mainnet only. Safe Apps are detected automatically when opened inside Safe.
     </div>
+  </section>
+
+  <!-- Adapter details populated by Load adapter -->
+  <section class="panel">
+    <h2>Adapter and pool details</h2>
+    <div class="small" style="margin-bottom:12px">Read-only details retrieved from the loaded adapter contract on BNB Smart Chain.</div>
+    <div class="detail-grid">
+      <div class="detail-item"><div class="small">Adapter owner</div><div class="value" id="detailOwner">—</div></div>
+      <div class="detail-item"><div class="small">Adapter status</div><div class="value" id="detailPaused">—</div></div>
+      <div class="detail-item"><div class="small">Pool address</div><div class="value" id="detailPool">—</div></div>
+      <div class="detail-item"><div class="small">USDT token address</div><div class="value" id="detailUSDT">—</div></div>
+      <div class="detail-item"><div class="small">INRP token address</div><div class="value" id="detailINRP">—</div></div>
+      <div class="detail-item"><div class="small">Adapter fee</div><div class="value" id="detailFee">—</div></div>
+      <div class="detail-item"><div class="small">Default partner share</div><div class="value" id="detailPartnerShare">—</div></div>
+      <div class="detail-item"><div class="small">Automatic fee transfer</div><div class="value" id="detailAutoFees">—</div></div>
+      <div class="detail-item"><div class="small">Adapter USDT balance</div><div class="value" id="detailUSDTBalance">—</div></div>
+      <div class="detail-item"><div class="small">Adapter INRP balance</div><div class="value" id="detailINRPBalance">—</div></div>
+      <div class="detail-item"><div class="small">Adapter BNB balance</div><div class="value" id="detailBNBBalance">—</div></div>
+      <div class="detail-item"><div class="small">Accrued USDT fees</div><div class="value" id="detailUSDTFees">—</div></div>
+      <div class="detail-item"><div class="small">Accrued INRP fees</div><div class="value" id="detailINRPFees">—</div></div>
+      <div class="detail-item"><div class="small">Partner USDT liability</div><div class="value" id="detailUSDTLiability">—</div></div>
+      <div class="detail-item"><div class="small">Partner INRP liability</div><div class="value" id="detailINRPLiability">—</div></div>
+    </div>
+    <div class="toolbar" style="margin-top:12px">
+      <button id="refreshAdapterDetails" class="secondary">Refresh adapter details</button>
+    </div>
+    <div class="small" id="adapterDetailsStatus" style="margin-top:10px">Load an adapter to retrieve its details.</div>
   </section>
 
   <nav aria-label="Application sections">
@@ -191,7 +223,14 @@ a{color:#9cb8ff}
         <button id="refreshPartner" class="secondary">Refresh partner information</button>
       </div>
       <div class="grid" style="margin-top:15px">
-        <div><label>Referral code</label><div class="value" id="partnerCode">—</div></div>
+        <div>
+          <label>Referral code</label>
+          <div class="value" id="partnerCode">—</div>
+          <div class="referral-actions">
+            <button id="copyReferralCode" class="secondary" disabled>Copy code</button>
+            <button id="shareReferralCode" class="secondary" disabled>Share code</button>
+          </div>
+        </div>
         <div><label>Payout address</label><div class="value" id="partnerPayout">—</div></div>
         <div><label>Commission share</label><div class="value" id="partnerShare">—</div></div>
         <div><label>Partner status</label><div class="value" id="partnerStatus">—</div></div>
@@ -374,6 +413,18 @@ const ABI = [
   "function owner() view returns(address)",
   "function paused() view returns(bool)",
   "function automaticFeeTransfer() view returns(bool)",
+  "function adapterFeeBps() view returns(uint256)",
+  "function defaultPartnerShareBps() view returns(uint256)",
+  "function DEFAULT_ADAPTER_FEE_BPS() view returns(uint256)",
+  "function DEFAULT_PARTNER_SHARE_BPS() view returns(uint256)",
+  "function MAX_ADAPTER_FEE_BPS() view returns(uint256)",
+  "function MAX_PARTNER_SHARE_BPS() view returns(uint256)",
+  "function FEE_DENOMINATOR() view returns(uint256)",
+  "function POOL() view returns(address)",
+  "function USDT() view returns(address)",
+  "function INRP() view returns(address)",
+  "function totalPartnerLiabilityUSDT() view returns(uint256)",
+  "function totalPartnerLiabilityINRP() view returns(uint256)",
   "function nonces(address) view returns(uint256)",
   "function getNonce(address) view returns(uint256)",
   "function registerPartner()",
@@ -451,13 +502,6 @@ function setStatus(message) {
   $("connectionStatus").textContent=message;
 }
 
-/*
- * Exact decimal parser.
- *
- * Avoids Number(value), which can introduce floating-point rounding.
- * Allows optional zero values when allowZero=true.
- * Accepts normal decimal notation and scientific notation from number inputs.
- */
 function parseUnits(value,decimals,allowZero=false) {
   if(value===null || value===undefined || String(value).trim()==="") {
     throw new Error("Enter an amount.");
@@ -614,7 +658,7 @@ async function requireTradeFunds(trade,quote,{checkAllowance=true}={}) {
   if(!account) throw new Error("Connect a wallet first.");
   if(Number(chainId)!==CHAIN_ID) throw new Error("Switch to BNB Smart Chain before trading.");
   const token=getToken(trade.side==="buy"?"USDT":"INRP");
-  const tokenContract=makeContract(token.address,ERC20_ABI,safeMode?provider:provider);
+  const tokenContract=makeContract(token.address,ERC20_ABI,provider);
   const required=trade.side==="buy"?quote[3]:quote[4];
   const [balance,allowance]=await Promise.all([
     tokenContract.balanceOf(account),
@@ -641,12 +685,62 @@ function getAdapterAddress() {
   return ethers.getAddress(value);
 }
 
+/* Adapter detail reader: only uses functions present in the supplied ABI. */
+async function refreshAdapterDetails() {
+  if(!adapter) throw new Error("Load the adapter address first.");
+
+  $("adapterDetailsStatus").textContent="Reading adapter details…";
+
+  const reads=[
+    ["detailOwner",()=>adapter.owner(),v=>v],
+    ["detailPaused",()=>adapter.paused(),v=>v?"Paused":"Active"],
+    ["detailPool",()=>adapter.POOL(),v=>v],
+    ["detailUSDT",()=>adapter.USDT(),v=>v],
+    ["detailINRP",()=>adapter.INRP(),v=>v],
+    ["detailFee",()=>adapter.adapterFeeBps(),v=>`${(Number(v)/100).toFixed(2)}% (${v.toString()} bps)`],
+    ["detailPartnerShare",()=>adapter.defaultPartnerShareBps(),v=>`${(Number(v)/100).toFixed(2)}% (${v.toString()} bps)`],
+    ["detailAutoFees",()=>adapter.automaticFeeTransfer(),v=>v?"Enabled":"Disabled"],
+    ["detailUSDTBalance",()=>adapter.adapterUSDTBalance(),v=>formatUnits(v,USDT_DECIMALS)+" USDT"],
+    ["detailINRPBalance",()=>adapter.adapterINRPBalance(),v=>formatUnits(v,INRP_DECIMALS)+" INRP"],
+    ["detailBNBBalance",()=>adapter.adapterBNBBalance(),v=>formatUnits(v,18)+" BNB"],
+    ["detailUSDTFees",()=>adapter.accruedUSDTFees(),v=>formatUnits(v,USDT_DECIMALS)+" USDT"],
+    ["detailINRPFees",()=>adapter.accruedINRPFees(),v=>formatUnits(v,INRP_DECIMALS)+" INRP"],
+    ["detailUSDTLiability",()=>adapter.totalPartnerLiabilityUSDT(),v=>formatUnits(v,USDT_DECIMALS)+" USDT"],
+    ["detailINRPLiability",()=>adapter.totalPartnerLiabilityINRP(),v=>formatUnits(v,INRP_DECIMALS)+" INRP"]
+  ];
+
+  const results=await Promise.allSettled(reads.map(item=>item[1]()));
+
+  let failures=0;
+  results.forEach((result,index)=>{
+    const [id,read,format]=reads[index];
+    if(result.status==="fulfilled") {
+      $(id).textContent=format(result.value);
+    } else {
+      $(id).textContent="Unavailable";
+      failures++;
+      log("Adapter detail read failed ("+id+"): "+errorText(result.reason));
+    }
+  });
+
+  $("adapterDetailsStatus").textContent=
+    failures===0
+      ? "Adapter and pool details loaded successfully."
+      : `${reads.length-failures} of ${reads.length} adapter details loaded. Check the activity log for failed reads.`;
+
+  log("Adapter details refreshed.");
+}
+
 function refreshAdapter() {
   adapterAddress=getAdapterAddress();
   localStorage.setItem("inrpAdapterAddress",adapterAddress);
-  adapter=makeContract(adapterAddress,ABI,signer || provider || new ethers.JsonRpcProvider(BSC_RPC));
+  adapter=makeContract(adapterAddress,ABI,provider || new ethers.JsonRpcProvider(BSC_RPC));
   log("Adapter loaded: "+adapterAddress);
   refreshWalletInfo();
+  refreshAdapterDetails().catch(e=>{
+    $("adapterDetailsStatus").textContent="Could not load adapter details: "+errorText(e);
+    log("Adapter detail error: "+errorText(e));
+  });
 }
 
 async function refreshWalletInfo() {
@@ -671,6 +765,10 @@ async function refreshWalletInfo() {
       log("Could not read adapter owner: "+errorText(e));
     }
   }
+  if(adapter) {
+    try { await refreshAdapterDetails(); }
+    catch(e) { log("Could not refresh adapter details: "+errorText(e)); }
+  }
   if(account && adapter && lastQuote) {
     try { await refreshTradeWalletStatus(lastQuote); }
     catch(e) { log("Could not refresh trade balance/allowance: "+errorText(e)); }
@@ -679,16 +777,35 @@ async function refreshWalletInfo() {
   }
 }
 
+async function updateWalletNetwork() {
+  if(safeMode) return chainId;
+  const target=walletKind==="walletconnect"?wcProvider:window.ethereum;
+  if(!target) return chainId;
+
+  const actualChain=await target.request({method:"eth_chainId"});
+  chainId=Number(BigInt(actualChain));
+
+  if(walletKind==="injected" || walletKind==="walletconnect") {
+    provider=new ethers.BrowserProvider(target);
+    signer=await provider.getSigner();
+    account=await signer.getAddress();
+    if(adapter) adapter=makeContract(adapterAddress,ABI,provider);
+  }
+
+  await refreshWalletInfo();
+  return chainId;
+}
+
 async function connectFromProvider(eip1193,kind) {
   provider=new ethers.BrowserProvider(eip1193);
-  const network=await provider.getNetwork();
-  chainId=Number(network.chainId);
+  const actualChain=await eip1193.request({method:"eth_chainId"});
+  chainId=Number(BigInt(actualChain));
   signer=await provider.getSigner();
   account=await signer.getAddress();
   walletKind=kind;
   safeMode=false;
   setStatus("Connected");
-  if(adapter) adapter=makeContract(adapterAddress,ABI);
+  if(adapter) adapter=makeContract(adapterAddress,ABI,provider);
   await refreshWalletInfo();
   if(chainId!==CHAIN_ID) log("Connected on chain "+chainId+". Switch to BNB Smart Chain.");
   log("Wallet connected: "+account);
@@ -794,11 +911,13 @@ async function disconnectWallet() {
   account=null;
   chainId=null;
   walletKind="none";
+  wcProvider=null;
   setStatus("Disconnected");
   await refreshWalletInfo();
   log("Wallet disconnected.");
 }
 
+/* Switch and then verify the actual EIP-1193 chain ID. */
 async function switchNetwork() {
   if(safeMode) {
     alert("Change the network using the Safe interface. This app cannot switch the Safe's network directly.");
@@ -827,29 +946,70 @@ async function switchNetwork() {
           blockExplorerUrls:["https://bscscan.com"]
         }]
       });
+
+      await target.request({
+        method:"wallet_switchEthereumChain",
+        params:[{chainId:CHAIN_HEX}]
+      });
     } else {
       throw e;
     }
   }
 
-  const network=await provider.getNetwork();
-  chainId=Number(network.chainId);
+  /* Do not trust the old BrowserProvider network cache. */
+  const actualChain=await target.request({method:"eth_chainId"});
+  chainId=Number(BigInt(actualChain));
+
+  if(chainId!==CHAIN_ID) {
+    await refreshWalletInfo();
+    throw new Error("Network switch did not complete. Wallet reports chain ID "+chainId+" instead of 56.");
+  }
+
+  provider=new ethers.BrowserProvider(target);
+  signer=await provider.getSigner();
+  account=await signer.getAddress();
+  if(adapter) adapter=makeContract(adapterAddress,ABI,provider);
+
   await refreshWalletInfo();
-  log("Network switch requested. Current chain: "+chainId);
+
+  if(chainId!==56) {
+    throw new Error("Verification failed: current network is not BNB Smart Chain (56).");
+  }
+
+  log("Wallet successfully switched to BNB Smart Chain. Verified chain ID: "+chainId);
 }
 
+/*
+ * Safe Apps SDK v9 uses sdk.txs.send({txs:[...]}) for batched Safe
+ * transactions. Validate the method before calling it, and await the
+ * returned promise directly instead of chaining .then() on an undefined value.
+ */
 async function sendCalls(calls,description) {
   requireWallet();
   requireMainnet();
 
+  if(!Array.isArray(calls) || calls.length===0)
+    throw new Error("No transactions were provided.");
+
   if(safeMode) {
+    if(!safeSdk || !safeSdk.txs || typeof safeSdk.txs.send!=="function") {
+      throw new Error("Safe batch transaction API is unavailable. Reopen this app inside Safe Apps and check the Safe Apps SDK connection.");
+    }
+
     const txs=calls.map(call=>({
-      to:call.to,
-      value:call.value || "0",
+      to:ethers.getAddress(call.to),
+      value:call.value===undefined?"0":String(call.value),
       data:call.data
     }));
 
-    const result=await safeSdk.txs.send({txs});
+    const pending=safeSdk.txs.send({txs});
+
+    if(!pending || typeof pending.then!=="function") {
+      throw new Error("Safe SDK did not return a transaction promise. No transaction was submitted.");
+    }
+
+    const result=await pending;
+
     log(description+" submitted to Safe. Safe transaction hash: "+
       (result?.safeTxHash || "See Safe interface"));
     alert("Submitted to Safe. This is a Safe transaction proposal, not proof of execution. Confirm and execute it in Safe.");
@@ -890,15 +1050,6 @@ async function readAdapter(method,args=[]) {
   return adapter[method](...args);
 }
 
-/*
- * Important:
- * - Buy input is USDT with 18 decimals.
- * - Sell input is INRP with 6 decimals.
- * - Buy minOut is INRP with 6 decimals.
- * - Sell minOut is USDT with 18 decimals.
- * - maxAdapterFee is USDT with 18 decimals.
- * - minOut and maxAdapterFee may be zero.
- */
 function selectedQuote() {
   const side = $("tradeSide").value;
 
@@ -999,8 +1150,6 @@ async function getTradeQuote() {
         `INRP required for approval: ${formatUnits(quote[4],INRP_DECIMALS)} INRP`;
     }
 
-    // maxAdapterFee is a USDT-denominated cap, not a percentage.
-    // Add a 5% tolerance to the quoted adapter fee to absorb small quote movement.
     const quotedAdapterFee=trade.side==="buy"?quote[2]:quote[3];
     const feeCap=(quotedAdapterFee*105n+99n)/100n;
     $("maxAdapterFee").value=formatUnits(feeCap,USDT_DECIMALS);
@@ -1033,7 +1182,7 @@ async function approveOnly(unlimited=false) {
 
   const {trade,quote,token,amount}=await approvalDetails(unlimited);
   const required=trade.side==="buy"?quote[3]:quote[4];
-  const tokenContract=makeContract(token.address,ERC20_ABI);
+  const tokenContract=makeContract(token.address,ERC20_ABI,provider);
   const balance=await tokenContract.balanceOf(account);
   if(balance<required) {
     await refreshTradeWalletStatus({side:trade.side,requiredInput:required});
@@ -1085,7 +1234,7 @@ async function approveAndExecuteTrade() {
   const {trade,quote,token,amount}=await approvalDetails(false);
   const funds=await requireTradeFunds(trade,quote,{checkAllowance:false});
   const partner=await resolvePartner(trade.code);
-  const tokenContract=makeContract(token.address,ERC20_ABI);
+  const tokenContract=makeContract(token.address,ERC20_ABI,provider);
 
   const approveData=tokenContract.interface.encodeFunctionData("approve",[
     adapterAddress,amount
@@ -1100,18 +1249,26 @@ async function approveAndExecuteTrade() {
   ]);
 
   if(safeMode) {
+    /*
+     * Both calls are placed in the same Safe proposal.
+     * If allowance is already sufficient, only the trade is batched.
+     */
     const calls=[];
-    if(funds.allowance<amount) calls.push({to:token.address,data:approveData});
+    if(funds.allowance<amount) {
+      calls.push({to:token.address,data:approveData});
+    }
     calls.push({to:adapterAddress,data:tradeData});
+
     await sendCalls(calls,"Approve + "+trade.side);
     return;
   }
 
-  const allowance=await tokenContract.allowance(account,adapterAddress);
-
-  if(allowance>=amount) {
+  if(funds.allowance>=amount) {
     log("Existing allowance is sufficient. Sending trade only.");
     await sendCalls([{to:adapterAddress,data:tradeData}],"Trade");
+    await refreshTradeWalletStatus(null);
+    lastQuote=null;
+    $("quoteResult").textContent="Trade confirmed. Request a fresh quote for the next trade.";
     return;
   }
 
@@ -1304,7 +1461,15 @@ async function refreshPartnerInfo() {
   const info=await readAdapter("getPartnerInfo",[account]);
   const fees=await readAdapter("getPartnerAccruedFees",[account]);
 
-  $("partnerCode").textContent=info.referralCode;
+  const code=info.referralCode;
+  const hasCode=info.registered &&
+    code &&
+    code!=="0x"+"0".repeat(64);
+
+  $("partnerCode").textContent=hasCode?code:"Not registered";
+  $("copyReferralCode").disabled=!hasCode;
+  $("shareReferralCode").disabled=!hasCode;
+
   $("partnerPayout").textContent=info.payoutAddress;
   $("partnerShare").textContent=(Number(info.commissionShareBps)/100)+"%";
   $("partnerStatus").textContent=
@@ -1317,6 +1482,48 @@ async function refreshPartnerInfo() {
   log("Partner information refreshed.");
 }
 
+async function copyReferralCode() {
+  const code=$("partnerCode").textContent.trim();
+  if(!/^0x[0-9a-fA-F]{64}$/.test(code))
+    throw new Error("No valid referral code is available. Register or refresh partner information first.");
+
+  if(navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(code);
+  } else {
+    const temp=document.createElement("textarea");
+    temp.value=code;
+    temp.style.position="fixed";
+    temp.style.opacity="0";
+    document.body.appendChild(temp);
+    temp.select();
+    const copied=document.execCommand("copy");
+    temp.remove();
+    if(!copied) throw new Error("Clipboard access failed. Copy the referral code manually.");
+  }
+
+  log("Referral code copied: "+code);
+  alert("Referral code copied.");
+}
+
+async function shareReferralCode() {
+  const code=$("partnerCode").textContent.trim();
+  if(!/^0x[0-9a-fA-F]{64}$/.test(code))
+    throw new Error("No valid referral code is available. Register or refresh partner information first.");
+
+  const shareData={
+    title:"INRP partner referral code",
+    text:"Use my INRP partner referral code: "+code
+  };
+
+  if(navigator.share) {
+    await navigator.share(shareData);
+    log("Referral code shared.");
+  } else {
+    await copyReferralCode();
+    alert("This browser does not support native sharing. The referral code has been copied so you can paste it into a message.");
+  }
+}
+
 async function registerPartner() {
   requireWallet();
   requireMainnet();
@@ -1325,6 +1532,7 @@ async function registerPartner() {
 
   if(safeMode) {
     log("Partner registration submitted to Safe. Refresh partner information after the Safe transaction is executed.");
+    alert("Registration proposal submitted. Execute it in Safe, then return here and click Refresh partner information.");
     return;
   }
 
@@ -1387,6 +1595,9 @@ async function claimPartnerFees() {
 
 async function adminAction(method,args,description) {
   await callAdapter(method,args,description);
+  if(!safeMode) {
+    await refreshAdapterDetails().catch(e=>log("Could not refresh adapter details: "+errorText(e)));
+  }
 }
 
 async function withdrawAdapterFees() {
@@ -1403,7 +1614,7 @@ async function withdrawAdapterFees() {
 async function rescueERC20() {
   const token=ethers.getAddress($("rescueTokenAddress").value.trim());
   const recipient=ethers.getAddress($("rescueTokenRecipient").value.trim());
-  const tokenContract=makeContract(token,ERC20_ABI);
+  const tokenContract=makeContract(token,ERC20_ABI,provider);
   const decimals=Number(await tokenContract.decimals());
   const amount=parseUnits($("rescueTokenAmount").value,decimals,false);
 
@@ -1435,10 +1646,81 @@ function bind(id,fn) {
   });
 }
 
+function setupProviderEvents() {
+  const injected=window.ethereum;
+  if(injected && typeof injected.on==="function") {
+    injected.on("chainChanged",async()=>{
+      try {
+        if(walletKind==="injected") {
+          await updateWalletNetwork();
+          log("Wallet network changed. Current chain ID: "+chainId);
+        }
+      } catch(e) {
+        log("Could not refresh after chain change: "+errorText(e));
+      }
+    });
+
+    injected.on("accountsChanged",async(accounts)=>{
+      if(walletKind!=="injected") return;
+      if(!accounts || accounts.length===0) {
+        account=null;
+        signer=null;
+        chainId=null;
+        provider=null;
+        setStatus("Disconnected");
+        await refreshWalletInfo();
+        return;
+      }
+      try {
+        await connectFromProvider(injected,"injected");
+      } catch(e) {
+        log("Could not refresh changed wallet account: "+errorText(e));
+      }
+    });
+  }
+}
+
+function setupWalletConnectEvents() {
+  if(!wcProvider || typeof wcProvider.on!=="function") return;
+
+  wcProvider.on("chainChanged",async()=>{
+    try {
+      if(walletKind==="walletconnect") {
+        await updateWalletNetwork();
+        log("WalletConnect network changed. Current chain ID: "+chainId);
+      }
+    } catch(e) {
+      log("Could not refresh WalletConnect chain: "+errorText(e));
+    }
+  });
+
+  wcProvider.on("accountsChanged",async(accounts)=>{
+    if(walletKind!=="walletconnect") return;
+    if(!accounts || accounts.length===0) {
+      account=null;
+      signer=null;
+      chainId=null;
+      provider=null;
+      setStatus("Disconnected");
+      await refreshWalletInfo();
+      return;
+    }
+    try {
+      await connectFromProvider(wcProvider,"walletconnect");
+    } catch(e) {
+      log("Could not refresh WalletConnect account: "+errorText(e));
+    }
+  });
+}
+
 function setupUI() {
   bind("loadAdapter",async()=>refreshAdapter());
+  bind("refreshAdapterDetails",refreshAdapterDetails);
   bind("connectWallet",connectInjected);
-  bind("connectWC",connectWalletConnect);
+  bind("connectWC",async()=>{
+    await connectWalletConnect();
+    setupWalletConnectEvents();
+  });
   bind("switchNetwork",switchNetwork);
   bind("disconnect",disconnectWallet);
 
@@ -1456,6 +1738,8 @@ function setupUI() {
 
   bind("registerPartner",registerPartner);
   bind("refreshPartner",refreshPartnerInfo);
+  bind("copyReferralCode",copyReferralCode);
+  bind("shareReferralCode",shareReferralCode);
   bind("updatePayout",updatePayout);
   bind("updatePayoutMode",updatePayoutMode);
   bind("claimFees",claimPartnerFees);
@@ -1550,6 +1834,7 @@ function setupUI() {
 
 async function init() {
   setupUI();
+  setupProviderEvents();
 
   const saved=localStorage.getItem("inrpAdapterAddress");
   if(saved) $("adapterAddress").value=saved;
@@ -1570,8 +1855,9 @@ async function init() {
         provider || new ethers.JsonRpcProvider(BSC_RPC)
       );
       log("Saved adapter address loaded: "+adapterAddress);
+      await refreshAdapterDetails();
     } catch(e) {
-      log("Saved adapter address is invalid: "+errorText(e));
+      log("Saved adapter address is invalid or its details could not be read: "+errorText(e));
     }
   }
 
@@ -1584,5 +1870,4 @@ init().catch(e=>{
 </script>
 </body>
 </html>
-
 
