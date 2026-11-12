@@ -984,38 +984,48 @@ async function switchNetwork() {
  * transactions. Validate the method before calling it, and await the
  * returned promise directly instead of chaining .then() on an undefined value.
  */
-async function sendCalls(calls,description) {
-  requireWallet();
-  requireMainnet();
-
-  if(!Array.isArray(calls) || calls.length===0)
-    throw new Error("No transactions were provided.");
-
-  if(safeMode) {
-    if(!safeSdk || !safeSdk.txs || typeof safeSdk.txs.send!=="function") {
-      throw new Error("Safe batch transaction API is unavailable. Reopen this app inside Safe Apps and check the Safe Apps SDK connection.");
-    }
-
-    const txs=calls.map(call=>({
-      to:ethers.getAddress(call.to),
-      value:call.value===undefined?"0":String(call.value),
-      data:call.data
-    }));
-
-    const pending=safeSdk.txs.send({txs});
-
-    if(!pending || typeof pending.then!=="function") {
-      throw new Error("Safe SDK did not return a transaction promise. No transaction was submitted.");
-    }
-
-    const result=await pending;
-
-    log(description+" submitted to Safe. Safe transaction hash: "+
-      (result?.safeTxHash || "See Safe interface"));
-    alert("Submitted to Safe. This is a Safe transaction proposal, not proof of execution. Confirm and execute it in Safe.");
-    return result;
+async function sendCalls(calls, description = "Safe transaction") {
+  if (!safeMode) {
+    throw new Error("Safe batch submission was requested outside Safe mode.");
   }
 
+  if (!safeSdk || !safeSdk.txs ||
+      typeof safeSdk.txs.send !== "function") {
+    throw new Error(
+      "Safe Apps SDK transaction API is unavailable. Reconnect through the Safe app and try again."
+    );
+  }
+
+  if (!Array.isArray(calls) || calls.length === 0) {
+    throw new Error("No transactions were provided for the Safe batch.");
+  }
+
+  const txs = calls.map((call) => ({
+    to: call.to,
+    value: call.value || "0",
+    data: call.data
+  }));
+
+  log(`Submitting ${description} as one Safe batch...`);
+
+  const pending = safeSdk.txs.send({ txs });
+
+  if (!pending || typeof pending.then !== "function") {
+    throw new Error(
+      "Safe SDK did not return a transaction Promise. Check that the Safe Apps SDK is initialized correctly and that the app is running inside Safe."
+    );
+  }
+
+  const result = await pending;
+
+  log(
+    `Safe batch submitted. Transaction hash: ${
+      result?.safeTxHash || result?.hash || "Awaiting Safe confirmation"
+    }`
+  );
+
+  return result;
+}
   let receipt=null;
 
   for(let i=0;i<calls.length;i++) {
@@ -1870,4 +1880,3 @@ init().catch(e=>{
 </script>
 </body>
 </html>
-
