@@ -113,7 +113,6 @@ a{color:#9cb8ff}
     </div>
   </section>
 
-  <!-- Adapter details populated by Load adapter -->
   <section class="panel">
     <h2>Adapter and pool details</h2>
     <div class="small" style="margin-bottom:12px">Read-only details retrieved from the loaded adapter contract on BNB Smart Chain.</div>
@@ -155,7 +154,6 @@ a{color:#9cb8ff}
         The code resolves to a partner wallet; the adapter receives that wallet
         for referral attribution.
       </div>
-
       <div class="grid">
         <div>
           <label>Trade direction</label>
@@ -182,7 +180,6 @@ a{color:#9cb8ff}
           <input id="referralCode" placeholder="0x... 64 hexadecimal characters">
         </div>
       </div>
-
       <div class="toolbar" style="margin-top:15px">
         <button id="quoteTrade" class="secondary">Get quote</button>
         <button id="approveExact" class="secondary">Approve exact amount</button>
@@ -619,6 +616,7 @@ async function refreshTradeWalletStatus(quote=lastQuote) {
     setTradeWalletStatus("Load a valid adapter address to check allowance.");
     return null;
   }
+
   const tokenContract=makeContract(token.address,ERC20_ABI,provider);
   const [balance,allowance]=await Promise.all([
     tokenContract.balanceOf(account),
@@ -657,25 +655,31 @@ async function refreshTradeWalletStatus(quote=lastQuote) {
 async function requireTradeFunds(trade,quote,{checkAllowance=true}={}) {
   if(!account) throw new Error("Connect a wallet first.");
   if(Number(chainId)!==CHAIN_ID) throw new Error("Switch to BNB Smart Chain before trading.");
+
   const token=getToken(trade.side==="buy"?"USDT":"INRP");
   const tokenContract=makeContract(token.address,ERC20_ABI,provider);
   const required=trade.side==="buy"?quote[3]:quote[4];
+
   const [balance,allowance]=await Promise.all([
     tokenContract.balanceOf(account),
     tokenContract.allowance(account,adapterAddress)
   ]);
+
   await refreshTradeWalletStatus({
     side:trade.side,
     requiredInput:required
   });
+
   if(balance<required) {
     throw new Error("INSUFFICIENT BALANCE: wallet has "+formatUnits(balance,token.decimals)+" "+(trade.side==="buy"?"USDT":"INRP")+
       "; quoted total required is "+formatUnits(required,token.decimals)+".");
   }
+
   if(checkAllowance && allowance<required) {
     throw new Error("APPROVAL REQUIRED: adapter allowance is "+formatUnits(allowance,token.decimals)+
       "; quoted total required is "+formatUnits(required,token.decimals)+". Use Approve exact amount or Approve + Buy / Sell.");
   }
+
   return {token,balance,allowance,required};
 }
 
@@ -685,7 +689,6 @@ function getAdapterAddress() {
   return ethers.getAddress(value);
 }
 
-/* Adapter detail reader: only uses functions present in the supplied ABI. */
 async function refreshAdapterDetails() {
   if(!adapter) throw new Error("Load the adapter address first.");
 
@@ -765,10 +768,12 @@ async function refreshWalletInfo() {
       log("Could not read adapter owner: "+errorText(e));
     }
   }
+
   if(adapter) {
     try { await refreshAdapterDetails(); }
     catch(e) { log("Could not refresh adapter details: "+errorText(e)); }
   }
+
   if(account && adapter && lastQuote) {
     try { await refreshTradeWalletStatus(lastQuote); }
     catch(e) { log("Could not refresh trade balance/allowance: "+errorText(e)); }
@@ -779,6 +784,7 @@ async function refreshWalletInfo() {
 
 async function updateWalletNetwork() {
   if(safeMode) return chainId;
+
   const target=walletKind==="walletconnect"?wcProvider:window.ethereum;
   if(!target) return chainId;
 
@@ -805,8 +811,11 @@ async function connectFromProvider(eip1193,kind) {
   walletKind=kind;
   safeMode=false;
   setStatus("Connected");
+
   if(adapter) adapter=makeContract(adapterAddress,ABI,provider);
+
   await refreshWalletInfo();
+
   if(chainId!==CHAIN_ID) log("Connected on chain "+chainId+". Switch to BNB Smart Chain.");
   log("Wallet connected: "+account);
 }
@@ -917,7 +926,6 @@ async function disconnectWallet() {
   log("Wallet disconnected.");
 }
 
-/* Switch and then verify the actual EIP-1193 chain ID. */
 async function switchNetwork() {
   if(safeMode) {
     alert("Change the network using the Safe interface. This app cannot switch the Safe's network directly.");
@@ -956,7 +964,6 @@ async function switchNetwork() {
     }
   }
 
-  /* Do not trust the old BrowserProvider network cache. */
   const actualChain=await target.request({method:"eth_chainId"});
   chainId=Number(BigInt(actualChain));
 
@@ -980,67 +987,65 @@ async function switchNetwork() {
 }
 
 /*
- * Safe Apps SDK v9 uses sdk.txs.send({txs:[...]}) for batched Safe
- * transactions. Validate the method before calling it, and await the
- * returned promise directly instead of chaining .then() on an undefined value.
+ * Unified transaction sender:
+ * - Safe: submits all calls together as one Safe batch.
+ * - MetaMask / WalletConnect: sends calls sequentially and waits for each
+ *   transaction to confirm before sending the next one.
  */
-async function sendCalls(calls, description = "Safe transaction") {
-  if (!safeMode) {
-    throw new Error("Safe batch submission was requested outside Safe mode.");
-  }
-
-  if (!safeSdk || !safeSdk.txs ||
-      typeof safeSdk.txs.send !== "function") {
-    throw new Error(
-      "Safe Apps SDK transaction API is unavailable. Reconnect through the Safe app and try again."
-    );
-  }
-
+async function sendCalls(calls, description = "Transaction") {
   if (!Array.isArray(calls) || calls.length === 0) {
-    throw new Error("No transactions were provided for the Safe batch.");
+    throw new Error("No transactions were provided.");
   }
 
-  const txs = calls.map((call) => ({
-    to: call.to,
-    value: call.value || "0",
-    data: call.data
-  }));
+  if (safeMode) {
+    if (!safeSdk || !safeSdk.txs ||
+        typeof safeSdk.txs.send !== "function") {
+      throw new Error(
+        "Safe Apps SDK transaction API is unavailable. Reopen this app inside Safe and reconnect."
+      );
+    }
 
-  log(`Submitting ${description} as one Safe batch...`);
+    const txs = calls.map(call => ({
+      to: call.to,
+      value: call.value == null ? "0" : String(call.value),
+      data: call.data
+    }));
 
-  const pending = safeSdk.txs.send({ txs });
+    log(`Submitting ${description} as one Safe batch...`);
 
-  if (!pending || typeof pending.then !== "function") {
-    throw new Error(
-      "Safe SDK did not return a transaction Promise. Check that the Safe Apps SDK is initialized correctly and that the app is running inside Safe."
+    const result = await safeSdk.txs.send({ txs });
+
+    log(
+      `Safe batch submitted. Transaction hash: ${
+        result?.safeTxHash || result?.hash || "Awaiting Safe confirmation"
+      }`
     );
+
+    return result;
   }
 
-  const result = await pending;
+  if (!signer) {
+    throw new Error("Wallet signer is unavailable. Connect MetaMask or WalletConnect again.");
+  }
 
-  log(
-    `Safe batch submitted. Transaction hash: ${
-      result?.safeTxHash || result?.hash || "Awaiting Safe confirmation"
-    }`
-  );
+  let receipt = null;
 
-  return result;
-}
-  let receipt=null;
+  for (let i = 0; i < calls.length; i++) {
+    const call = calls[i];
 
-  for(let i=0;i<calls.length;i++) {
-    const call=calls[i];
-    const tx=await signer.sendTransaction({
-      to:call.to,
-      data:call.data,
-      value:call.value || 0
+    const tx = await signer.sendTransaction({
+      to: call.to,
+      data: call.data,
+      value: call.value == null ? 0 : call.value
     });
 
     log(`${description}: transaction ${i+1}/${calls.length} submitted: ${tx.hash}`);
-    receipt=await tx.wait();
 
-    if(!receipt || receipt.status!==1)
-      throw new Error("Transaction "+(i+1)+" failed.");
+    receipt = await tx.wait();
+
+    if (!receipt || receipt.status !== 1) {
+      throw new Error("Transaction " + (i+1) + " failed.");
+    }
 
     log(`${description}: transaction ${i+1}/${calls.length} confirmed.`);
   }
@@ -1194,6 +1199,7 @@ async function approveOnly(unlimited=false) {
   const required=trade.side==="buy"?quote[3]:quote[4];
   const tokenContract=makeContract(token.address,ERC20_ABI,provider);
   const balance=await tokenContract.balanceOf(account);
+
   if(balance<required) {
     await refreshTradeWalletStatus({side:trade.side,requiredInput:required});
     throw new Error("INSUFFICIENT BALANCE: approval is blocked because your token balance is below the quoted total required amount.");
@@ -1207,6 +1213,7 @@ async function approveOnly(unlimited=false) {
     [{to:token.address,data}],
     unlimited ? "Unlimited approval" : "Exact token approval"
   );
+
   if(!safeMode) await refreshTradeWalletStatus({side:trade.side,requiredInput:required});
 }
 
@@ -1230,6 +1237,7 @@ async function executeDirectTrade() {
     [{to:adapterAddress,data}],
     trade.side==="buy" ? "Buy INRP" : "Sell INRP"
   );
+
   if(!safeMode) {
     await refreshTradeWalletStatus(null);
     lastQuote=null;
@@ -1259,14 +1267,12 @@ async function approveAndExecuteTrade() {
   ]);
 
   if(safeMode) {
-    /*
-     * Both calls are placed in the same Safe proposal.
-     * If allowance is already sufficient, only the trade is batched.
-     */
     const calls=[];
+
     if(funds.allowance<amount) {
       calls.push({to:token.address,data:approveData});
     }
+
     calls.push({to:adapterAddress,data:tradeData});
 
     await sendCalls(calls,"Approve + "+trade.side);
@@ -1358,7 +1364,6 @@ async function createAuthorization() {
 
   const deadline=BigInt(Math.floor(Date.now()/1000)+minutes*60);
   const nonce=await readAdapter("getNonce",[user]);
-
   const value={user,isBuy,amount,minOut,maxAdapterFee,nonce,deadline};
   let signature;
 
@@ -1494,6 +1499,7 @@ async function refreshPartnerInfo() {
 
 async function copyReferralCode() {
   const code=$("partnerCode").textContent.trim();
+
   if(!/^0x[0-9a-fA-F]{64}$/.test(code))
     throw new Error("No valid referral code is available. Register or refresh partner information first.");
 
@@ -1508,6 +1514,7 @@ async function copyReferralCode() {
     temp.select();
     const copied=document.execCommand("copy");
     temp.remove();
+
     if(!copied) throw new Error("Clipboard access failed. Copy the referral code manually.");
   }
 
@@ -1517,6 +1524,7 @@ async function copyReferralCode() {
 
 async function shareReferralCode() {
   const code=$("partnerCode").textContent.trim();
+
   if(!/^0x[0-9a-fA-F]{64}$/.test(code))
     throw new Error("No valid referral code is available. Register or refresh partner information first.");
 
@@ -1605,6 +1613,7 @@ async function claimPartnerFees() {
 
 async function adminAction(method,args,description) {
   await callAdapter(method,args,description);
+
   if(!safeMode) {
     await refreshAdapterDetails().catch(e=>log("Could not refresh adapter details: "+errorText(e)));
   }
@@ -1658,6 +1667,7 @@ function bind(id,fn) {
 
 function setupProviderEvents() {
   const injected=window.ethereum;
+
   if(injected && typeof injected.on==="function") {
     injected.on("chainChanged",async()=>{
       try {
@@ -1672,6 +1682,7 @@ function setupProviderEvents() {
 
     injected.on("accountsChanged",async(accounts)=>{
       if(walletKind!=="injected") return;
+
       if(!accounts || accounts.length===0) {
         account=null;
         signer=null;
@@ -1681,6 +1692,7 @@ function setupProviderEvents() {
         await refreshWalletInfo();
         return;
       }
+
       try {
         await connectFromProvider(injected,"injected");
       } catch(e) {
@@ -1706,6 +1718,7 @@ function setupWalletConnectEvents() {
 
   wcProvider.on("accountsChanged",async(accounts)=>{
     if(walletKind!=="walletconnect") return;
+
     if(!accounts || accounts.length===0) {
       account=null;
       signer=null;
@@ -1715,6 +1728,7 @@ function setupWalletConnectEvents() {
       await refreshWalletInfo();
       return;
     }
+
     try {
       await connectFromProvider(wcProvider,"walletconnect");
     } catch(e) {
@@ -1727,10 +1741,12 @@ function setupUI() {
   bind("loadAdapter",async()=>refreshAdapter());
   bind("refreshAdapterDetails",refreshAdapterDetails);
   bind("connectWallet",connectInjected);
+
   bind("connectWC",async()=>{
     await connectWalletConnect();
     setupWalletConnectEvents();
   });
+
   bind("switchNetwork",switchNetwork);
   bind("disconnect",disconnectWallet);
 
@@ -1838,6 +1854,7 @@ function setupUI() {
       buy
         ? "Enter a USDT amount and request a new buy quote."
         : "Enter an INRP amount and request a new sell quote.";
+
     setTradeWalletStatus("Request a new quote to check the selected token balance and allowance.");
   });
 }
@@ -1864,8 +1881,10 @@ async function init() {
         ABI,
         provider || new ethers.JsonRpcProvider(BSC_RPC)
       );
+
       log("Saved adapter address loaded: "+adapterAddress);
       await refreshAdapterDetails();
+
     } catch(e) {
       log("Saved adapter address is invalid or its details could not be read: "+errorText(e));
     }
