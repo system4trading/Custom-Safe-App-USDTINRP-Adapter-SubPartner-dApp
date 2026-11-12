@@ -719,22 +719,9 @@ async function detectSafe() {
 }
 
 async function connectInjected() {
-  try {
-    if (await detectSafe()) {
-      await updateWalletNetwork();
-      return;
-    }
-
-    if (!window.ethereum) {
-      throw new Error("No injected wallet found. Install or open a compatible wallet.");
-    }
-
-    const browserProvider = new ethers.BrowserProvider(window.ethereum);
-    await connectFromProvider(browserProvider, "Wallet");
-  } catch (err) {
-    notice(err.message, "error");
-    log(err.message, "error");
-  }
+  if(!window.ethereum) throw new Error("No injected wallet found.");
+  await window.ethereum.request({method:"eth_requestAccounts"});
+  await connectFromProvider(window.ethereum,"injected");
 }
 
 async function connectWalletConnect() {
