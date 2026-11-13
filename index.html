@@ -856,6 +856,7 @@ async function detectSafe() {
 
 async function connectInjected() {
   if(!window.ethereum) throw new Error("No injected wallet found.");
+  const browserProvider = new ethers.BrowserProvider(window.ethereum);
   await browserProvider.send("eth_requestAccounts", []);
   await window.ethereum.request({method:"eth_requestAccounts"});
   await connectFromProvider(window.ethereum,"injected");
