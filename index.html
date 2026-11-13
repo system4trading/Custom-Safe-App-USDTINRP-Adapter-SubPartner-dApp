@@ -1069,9 +1069,14 @@ async function requireTradeFunds(config, options = {}) {
   const contract = tokenContract(token.address);
   const balance = await contract.balanceOf(account);
 
-  const required = config.isBuy
-    ? (lastQuote?.totalRequired ?? config.amount)
-    : config.amount;
+  /*
+   * Approval must cover the complete amount the adapter will pull:
+   * trade amount plus the adapter's separately charged fee.
+   * The adapter quote returns this as totalRequired for both directions.
+   * The LP fee is deducted inside the underlying pool and is not added
+   * to the user's adapter allowance a second time.
+   */
+  const required = lastQuote?.totalRequired ?? config.amount;
 
   if (balance < required) {
     throw new Error(`Insufficient ${token.symbol} balance.`);
